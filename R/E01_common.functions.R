@@ -266,7 +266,7 @@ common_frame <- function(formula, data, family){
 }
 
 
-# Compute the DIC. WAIC,LMPL and loglikelihood
+# Compute the DIC. WAIC,LMPL, loglikelihood and LOOIC
 common_modelfit <- function(samples.loglike, deviance.fitted){
   #### WAIC
   p.w <- sum(apply(samples.loglike,2, var), na.rm=TRUE)
@@ -295,7 +295,7 @@ common_modelfit <- function(samples.loglike, deviance.fitted){
 
 
   #### LOOIC
-  LOO <- loo(samples.loglike[,-which(is.na(samples.loglike[1,]))])
+  LOO <- suppressWarnings(loo(samples.loglike[,-which(is.na(samples.loglike[1,]))]))
   LOOIC <- LOO$estimates[3,1]
   elpd <- LOO$estimates[1,1]
 
@@ -338,7 +338,7 @@ common_prior_varmat_check <- function(prior.varmat, J){
   if(sum(is.na(prior.varmat))!=0) stop("prior.Sigma.scale has missing values.", call.=FALSE)
 }
 
-#### Check the verbose option ----
+#### Check the verbose option
 common_verbose <- function(verbose){
   if(is.null(verbose)) verbose=TRUE
   if(!is.logical(verbose)) stop("the verbose option is not logical.", call.=FALSE)
