@@ -1,4 +1,4 @@
-#### H02 Model Fit ####
+#### H03 Model Fit ####
 #### Test Function Code ####
 
 # 1 Data and Input --------------------------------------------------------
@@ -27,9 +27,9 @@ for (i in 1:length(Input_copula)) {
                                        W = W,
                                        data = SA3_Dataset,
                                        copula = "gaussian",
-                                       burnin = 1000,
-                                       n_sample = 2000,
-                                       thin = 1)
+                                       burnin = 10000,
+                                       n_sample = 15000,
+                                       thin = 5)
 }
 
 
