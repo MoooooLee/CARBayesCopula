@@ -36,7 +36,7 @@ Residual <- matrix(NA, nrow = 329, ncol = 5) %>%
   as.data.frame()
 U_Residual <- matrix(NA, nrow = 329, ncol = 5) %>%
   as.data.frame()
-i <- 2
+
 for (i in 1:5) {
   Domain_Name <- c("Health", "Social","Emotional","Language","Communication")[i]
   Residual[,i] <- SA3_Dataset_GLM %>%
@@ -54,9 +54,75 @@ for (i in 1:5) {
 # 3.2 Plot Residuals ------------------------------------------------------
 
 U_Residual %>%
+  as_tibble() %>%
+  pivot_longer(cols = c(Social, Emotional, Language, Communication),
+               names_to = "Domain",
+               values_to = "Residual") %>%
   ggplot() +
   geom_density_2d_filled(aes(x = Health,
-                             y = Social))
+                             y = Residual)) +
+  coord_fixed(ratio = 1) +
+  facet_wrap(~Domain)  +
+  labs(title = "Empirical Copulas of Residuals",
+       subtitle = "between Health and each of other variables") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),  # Hide x-axis labels
+    axis.text.y = element_blank(),  # Hide y-axis labels
+    axis.ticks.x = element_blank(), # Hide x-axis ticks
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+
+# 4 Copula Graph ----------------------------------------------------------
+n <- 329
+normalCopula(0.7, dim = 2) %>%
+  rCopula(n,.) %>%
+  as_tibble() %>%
+  mutate(Copula = "Normal") %>%
+  bind_rows(
+    frankCopula(5, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Frank"),
+    claytonCopula(5, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Clayton"),
+    gumbelCopula(5, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Gumbel"),
+    joeCopula(5, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Joe"),
+    tCopula(0.7, dim = 2, df = 100) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "t")
+  ) %>%
+  ggplot() +
+  geom_density_2d_filled(aes(x = V1,
+                             y = V2)) +
+  coord_fixed(ratio = 1) +
+  facet_wrap(~Copula)  +
+  labs(title = "Copulas") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),  # Hide x-axis labels
+    axis.text.y = element_blank(),  # Hide y-axis labels
+    axis.ticks.x = element_blank(), # Hide x-axis ticks
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+
+
+
+
+?tCopula
 
 
 
