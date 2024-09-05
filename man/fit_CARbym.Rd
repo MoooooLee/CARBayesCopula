@@ -66,7 +66,7 @@ A list containing the model fit, including posterior samples, fitted values, res
 }
 }
 \description{
-This function fits a bivariate patial generalised linear mixed model to areal unit data, where the response variable can be binomial. The linear predictor is modelled by known covariates and 2 vectors of random effects. The latter are modelled by the BYM conditional autoregressive prior proposed by Besag et al. (1991), and further details are given in the vignette accompanying this package. Inference is conducted in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation. Missing (NA) values are allowed in the response, and posterior predictive distributions are created for the missing values using data augmentation. These are saved in the "samples" argument in the output of the function and are denoted by "Y".
+This function fits a bivariate generalized linear mixed model to areal unit data, where the response variable can be binomial. The linear predictor is modelled by known covariates and 2 vectors of random effects. The latter are modelled by the BYM conditional autoregressive prior proposed by Besag et al. (1991), and further details are given in the vignette accompanying this package. Inference is conducted in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation. Missing (NA) values are allowed in the response, and posterior predictive distributions are created for the missing values using data augmentation. These are saved in the "samples" argument in the output of the function and are denoted by "Y".
 }
 \references{
 \describe{
