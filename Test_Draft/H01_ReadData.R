@@ -27,8 +27,5 @@ SA3_Dataset %<>%
   mutate(across(contains("_N_"),
                 ~replace(., . ==0, 1)))
 
-SA3_Trials <- cbind(SA3_Dataset$Health_N_21,
-                    SA3_Dataset$Social_N_21)
-
 # End of this section -----------------------------------------------------
 

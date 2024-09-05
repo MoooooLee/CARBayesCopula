@@ -1,22 +1,41 @@
-#' Fit a Bivariate BYM CAR Model for Binomial Data
+#' Fit a Bivariate spatial generalized linear mixed model with BYM structured random effects
 #'
-#' This function fits a bivariate Conditional Autoregressive (CAR) BYM model for binomial data. It allows for spatial correlation in the response using the Besag-York-Mollié (BYM) model.
+#' This function fits a bivariate patial generalised linear mixed model to areal unit data, where the response variable can be binomial. The linear predictor is modelled by known covariates and 2 vectors of random effects. The latter are modelled by the BYM conditional autoregressive prior proposed by Besag et al. (1991), and further details are given in the vignette accompanying this package. Inference is conducted in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation. Missing (NA) values are allowed in the response, and posterior predictive distributions are created for the missing values using data augmentation. These are saved in the "samples" argument in the output of the function and are denoted by "Y".
 #'
-#' @param formula A symbolic description of the model to be fitted.
-#' @param data An optional data frame containing the variables in the model. If not found in data, the variables are taken from the environment from which `BVS_CARbym_Binomial` is called.
+#' @param formula A formula for the covariate part of the model using the syntax of the lm() function. Offsets can be included here using the offset() function.  The covariates should each be a K*1 vector, where K is the number of spatial units. The response variable can contain missing values (NA).
+#' @param data An optional data frame containing the variables in the model. If not found in data, the variables are taken from the environment from which `fit_CARbym` is called.
 #' @param trials A matrix representing the number of trials for the binomial model, with dimensions matching those of the response variable.
-#' @param W A spatial weight matrix representing neighborhood structures.
+#' @param W A spatial weight matrix representing neighborhood structures. which should be a non-negative K by K neighbourhood matrix (where K is the number of spatial units). Typically a binary specification is used, where the (j,k)th element equals one if areas (j, k) are spatially close (e.g. share a common border) and is zero otherwise. The matrix can be non-binary, but each row must contain at least one non-zero entry.
 #' @param burnin The number of burn-in iterations for the MCMC sampling (default is 5000).
 #' @param n_sample The total number of MCMC samples (default is 10000).
 #' @param thin The thinning interval for the MCMC samples (default is 5).
-#' @param prior_beta_mean A vector of prior means for the regression coefficients. Defaults to a vector of zeros.
-#' @param prior_beta_var A vector of prior variances for the regression coefficients. Defaults to a large value (100000).
-#' @param prior_Tau_df Degrees of freedom for the prior distribution of the variance-covariance matrix Tau. Defaults to `J + 1`, where `J` is the number of columns in the response variable.
-#' @param prior_Tau_scale A scale matrix for the prior distribution of Tau. Defaults to a small diagonal matrix.
-#' @param prior_Sigma_df Degrees of freedom for the prior distribution of the variance-covariance matrix Sigma. Defaults to `J + 1`.
-#' @param prior_Sigma_scale A scale matrix for the prior distribution of Sigma. Defaults to a small diagonal matrix.
+#' @param prior_beta_mean A vector of prior means for the regression parameters beta (Gaussian priors are assumed). Defaults to a vector of zeros.
+#' @param prior_beta_var A vector of prior variances for the regression parameters beta (Gaussian priors are assumed). Defaults to a vector with values 100000.
+#' @param prior_Tau_df The prior degrees of freedom for the Inverse-Wishart prior for Tau. Defaults to J+1.
+#' @param prior_Tau_scale The prior J times J scale matrix for the Inverse-Wishart prior for Tau. Defaults to the identity matrix divided by 1000.
+#' @param prior_Sigma_df The prior degrees of freedom for the Inverse-Wishart prior for Sigma. Defaults to J+1.
+#' @param prior_Sigma_scale The prior J times J scale matrix for the Inverse-Wishart prior for Sigma. Defaults to the identity matrix divided by 1000.
 #' @param verbose Logical; if TRUE, prints progress during the MCMC sampling (default is TRUE).
+#'
 #' @return A list containing the model fit, including posterior samples, fitted values, residuals, and model summary.
+#' \describe{
+#'  \item{summary.results }{A summary table of the parameters.}
+#'  \item{samples }{A list containing the MCMC samples, as well as the loglik of each samples from the model.}
+#'  \item{fitted.values }{A matrix of fitted values for each area and responsevariable.}
+#'  \item{residuals }{A list with 2 elements, where each element is a vector of a type of residuals. The types of residual are "response" (raw), and "pearson".}
+#'  \item{modelfit }{Model fit criteria including the Deviance Information Criterion(DIC) and its corresponding estimated effective number of parameters (p.d), the Log Marginal Predictive Likelihood (LMPL), the Watanabe-Akaike Information Criterion (WAIC) and its corresponding estimated number of effective parameters (p.w), the Leave-One-Out Information Criterion (LOOIC), the Expected Log Predictive Density (ELPD), and the loglikelihood.}
+#'  \item{accept }{The acceptance probabilities for the parameters.}
+#'  \item{localised.structure }{NULL, for compatability with other models.}
+#'  \item{formula }{The formula (as a text string) for the response, covariate and offset parts of the model}
+#'  \item{model }{A text string describing the model fit.}
+#'  \item{X }{The design matrix of covariates.}
+#'}
+#'
+#'@references
+#' \describe{
+#'Besag, J., J. York, and A. Mollie (1991). Bayesian image restoration with two applications in spatial statistics. Annals of the Institute of Statistics and Mathematics 43, 1-59.
+#' }
+#'
 #' @import coda loo
 #' @export
 

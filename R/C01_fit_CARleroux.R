@@ -1,37 +1,52 @@
-#' Fit a Bivariate Leroux CAR Model without Copula for Binomial Data
+#' Fit a Bivariate spatial generalized linear mixed model with Leroux structured random effects
 #'
-#' This function fits a bivariate Conditional Autoregressive (CAR) Leroux model for binomial data without using copulas.
+#' Fit a bivariate spatial generalized linear mixed model to areal unit data, where the response variable follows binomial distribution. The linear predictor is modeled by known covariates and a vector of random effects. The latter account for both spatial and between variable correlation, via a Kronecker product formulation. Spatial correlation is captured by the conditional autoregressive (CAR) prior proposed by Leroux et al. (2000), and between variable correlation is captured by a between variable covariance matrix with no fixed structure. This is a type of multivariate conditional autoregressive (MCAR) model. Further details are given in the vignette accompanying this package. Independent (over space) random effects can be obtained by setting rho=0, while the intrinsic MCAR model can be obtained by setting rho=1. Inference is conducted in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation. Missing (NA) values are allowed in the response, and posterior predictive distributions are created for the missing values using data augmentation. These are saved in the "samples" argument in the output of the function and are denoted by "Y". For a full model specification see the vignette accompanying this package.
 #'
-#' @param formula A symbolic description of the model to be fitted.
-#' @param data An optional data frame containing the variables in the model. If not found in data, the variables are taken from the environment from which `fit_CARleroux_copula` is called.
+#' @param formula A formula for the covariate part of the model using the syntax of the lm() function. Offsets can be included here using the offset() function.  The covariates should each be a K*1 vector, where K is the number of spatial units. The response variable can contain missing values (NA).
+#' @param data An optional data frame containing the variables in the model. If not found in data, the variables are taken from the environment from which `fit_CARleroux` is called.
 #' @param trials A matrix representing the number of trials for the binomial model, with dimensions matching those of the response variable.
-#' @param W A spatial weight matrix representing neighborhood structures.
+#' @param W A spatial weight matrix representing neighborhood structures. which should be a non-negative K by K neighbourhood matrix (where K is the number of spatial units). Typically a binary specification is used, where the (j,k)th element equals one if areas (j, k) are spatially close (e.g. share a common border) and is zero otherwise. The matrix can be non-binary, but each row must contain at least one non-zero entry.
 #' @param burnin The number of burn-in iterations for the MCMC sampling (default is 5000).
 #' @param n_sample The total number of MCMC samples (default is 10000).
 #' @param thin The thinning interval for the MCMC samples (default is 5).
-#' @param prior_beta_mean A vector of prior means for the regression coefficients. Defaults to a vector of zeros.
-#' @param prior_beta_var A vector of prior variances for the regression coefficients. Defaults to a large value (100000).
-#' @param prior_Sigma_df Degrees of freedom for the prior distribution of the variance-covariance matrix Sigma. Defaults to `J + 1`, where `J` is the number of columns in the response variable.
-#' @param prior_Sigma_scale A scale matrix for the prior distribution of Sigma. Defaults to a small diagonal matrix.
-#' @param rho An optional value for the spatial autocorrelation parameter. If not provided, a random value is generated.
+#' @param prior_beta_mean A vector of prior means for the regression parameters beta (Gaussian priors are assumed). Defaults to a vector of zeros.
+#' @param prior_beta_var A vector of prior variances for the regression parameters beta (Gaussian priors are assumed). Defaults to a vector with values 100000.
+#' @param prior_Sigma_df The prior degrees of freedom for the Inverse-Wishart prior for Sigma. Defaults to J+1.
+#' @param prior_Sigma_scale The prior J times J scale matrix for the Inverse-Wishart prior for Sigma. Defaults to the identity matrix divided by 1000.
+#' @param rho The value in the interval [0, 1] that the spatial dependence parameter rho is fixed at if it should not be estimated. If this arugment is NULL then rho is estimated in the model.
 #' @param verbose Logical; if TRUE, prints progress during the MCMC sampling (default is TRUE).
+#'
 #' @return A list containing the model fit, including posterior samples, fitted values, residuals, and model summary.
+#' \describe{
+#'  \item{summary.results }{A summary table of the parameters.}
+#'  \item{samples }{A list containing the MCMC samples, as well as the loglik of each samples from the model.}
+#'  \item{fitted.values }{A matrix of fitted values for each area and responsevariable.}
+#'  \item{residuals }{A list with 2 elements, where each element is a vector of a type of residuals. The types of residual are "response" (raw), and "pearson".}
+#'  \item{modelfit }{Model fit criteria including the Deviance Information Criterion(DIC) and its corresponding estimated effective number of parameters (p.d), the Log Marginal Predictive Likelihood (LMPL), the Watanabe-Akaike Information Criterion (WAIC) and its corresponding estimated number of effective parameters (p.w), the Leave-One-Out Information Criterion (LOOIC), the Expected Log Predictive Density (ELPD), and the loglikelihood.}
+#'  \item{accept }{The acceptance probabilities for the parameters.}
+#'  \item{localised.structure }{NULL, for compatability with other models.}
+#'  \item{formula }{The formula (as a text string) for the response, covariate and offset parts of the model}
+#'  \item{model }{A text string describing the model fit.}
+#'  \item{X }{The design matrix of covariates.}
+#'}
+#'@references
+#' \describe{
+#' Gelfand, A and Vounatsou, P (2003). Proper multivariate conditional autoregressive models for spatial data analysis, Biostatistics, 4, 11-25.
+#'
+#' Kavanagh, L., D. Lee, and G. Pryce (2016). Is Poverty Decentralising? Quantifying Uncertainty in the Decentralisation of Urban Poverty, Annals of the American Association of Geographers, 106, 1286-1298.
+#'
+#' Leroux B, Lei X, Breslow N (2000). "Estimation of Disease Rates in SmallAreas: A New Mixed Model for Spatial Dependence." In M Halloran, D Berry (eds.), \emph{Statistical Models in Epidemiology, the Environment and Clinical Trials},pp. 179-191. Springer-Verlag, New York.
+#' }
+#'
 #' @import coda loo
 #' @export
 
-fit_CARleroux <- function(formula,
-                                 data = NULL,
-                                 trials,
-                                 W,
-                                 burnin = 5000,
-                                 n_sample = 10000,
-                                 thin = 5,
-                                 prior_beta_mean = NULL,
-                                 prior_beta_var = NULL,
-                                 prior_Sigma_df = NULL,
-                                 prior_Sigma_scale = NULL,
-                                 rho = NULL,
-                                 verbose = TRUE) {
+fit_CARleroux <- function(formula, data = NULL, trials, W,
+                          burnin = 5000, n_sample = 10000, thin = 5,
+                          prior_beta_mean = NULL, prior_beta_var = NULL,
+                          prior_Sigma_df = NULL, prior_Sigma_scale = NULL,
+                          rho = NULL,
+                          verbose = TRUE) {
 
   # 2 Data preparing --------------------------------------------------------
 

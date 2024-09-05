@@ -97,11 +97,7 @@ normalCopula(0.7, dim = 2) %>%
     joeCopula(5, dim = 2) %>%
       rCopula(n,.) %>%
       as_tibble() %>%
-      mutate(Copula = "Joe"),
-    tCopula(0.7, dim = 2, df = 100) %>%
-      rCopula(n,.) %>%
-      as_tibble() %>%
-      mutate(Copula = "t")
+      mutate(Copula = "Joe")
   ) %>%
   ggplot() +
   geom_density_2d_filled(aes(x = V1,
@@ -119,10 +115,6 @@ normalCopula(0.7, dim = 2) %>%
     legend.position = "none"
   )
 
-
-
-
-?tCopula
 
 
 
