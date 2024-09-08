@@ -542,7 +542,7 @@ fit_CARleroux_copula_joe <- function(formula,
   # mean_theta <- matrix(apply(samples_theta, 2, mean),
   #                      nrow=K, ncol=J, byrow=T)
 
-  mean_logit <- X_standardised %*% mean_beta + mean_phi + mean_phi + offset
+  mean_logit <- X_standardised %*% mean_beta + mean_phi + offset
   mean_prob <- exp(mean_logit)  / (1 + exp(mean_logit))
   fitted_mean <- trials * mean_prob
   deviance_fitted <- -2 * sum(dbinom(x=as.numeric(t(Y)),
