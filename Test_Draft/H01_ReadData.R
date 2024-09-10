@@ -13,8 +13,8 @@ library(spdep)
 
 # 3 Data and Functions Input ----------------------------------------------
 
-data("SA3_Dataset")
-data("SA3_W")
+data("aedc_sa3")
+data("aedc_W_sa3")
 
 
 # 4 Dataset Modification --------------------------------------------------
