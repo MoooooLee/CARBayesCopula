@@ -7,7 +7,9 @@
 As this is the first published version, the response variables can only be binomial. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
 
 ## Installation
+
 You can only install the pre-released version of `CARBayesCopula` from GitHub:
+
 ```r
 # Install devtools if necessary
 # install.packages("devtools")
@@ -36,5 +38,7 @@ This project is open-source and available under the GPL-3.0 License.
 For any inquiries or feedback, please contact Mu Li at [mu.li@anu.edu.au](mu.li@anu.edu.au).
 
 # References
+
 Eddelbuettel, Dirk, and Romain François. 2011. “Rcpp: Seamless r and c++ Integration.” Journal of Statistical Software 40: 1–18.
+
 Lee, Duncan. 2013. “CARBayes: An r Package for Bayesian Spatial Modeling with Conditional Autoregressive Priors.” Journal of Statistical Software 55 (13): 1–24.
