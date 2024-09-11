@@ -146,14 +146,14 @@ fit_CARbym <- function(formula,
 
   # 2.3.5 Check and format prior --------------------------------------------
 
-  if(is_null(prior_beta_mean)) prior_beta_mean <- rep(0, p)
-  if(is_null(prior_beta_var)) prior_beta_var <- rep(100000, p)
+  if(is.null(prior_beta_mean)) prior_beta_mean <- rep(0, p)
+  if(is.null(prior_beta_var)) prior_beta_var <- rep(100000, p)
 
-  if(is_null(prior_Sigma_df)) prior_Sigma_df <- J+1
-  if(is_null(prior_Sigma_scale)) prior_Sigma_scale <- diag(rep(1,J)) / 1000
+  if(is.null(prior_Sigma_df)) prior_Sigma_df <- J+1
+  if(is.null(prior_Sigma_scale)) prior_Sigma_scale <- diag(rep(1,J)) / 1000
 
-  if(is_null(prior_Tau_df)) prior_Tau_df <- J+1
-  if(is_null(prior_Tau_scale)) prior_Tau_scale <- diag(rep(1,J)) / 1000
+  if(is.null(prior_Tau_df)) prior_Tau_df <- J+1
+  if(is.null(prior_Tau_scale)) prior_Tau_scale <- diag(rep(1,J)) / 1000
 
   common_prior_beta_check(prior_beta_mean, prior_beta_var, p)
   common_prior_varmat_check(prior_Sigma_scale, J)

@@ -13,7 +13,7 @@
 #' @param prior_beta_var A vector of prior variances for the regression parameters beta (Gaussian priors are assumed). Defaults to a vector with values 100000.
 #' @param prior_Sigma_df The prior degrees of freedom for the Inverse-Wishart prior for Sigma. Defaults to J+1.
 #' @param prior_Sigma_scale The prior J times J scale matrix for the Inverse-Wishart prior for Sigma. Defaults to the identity matrix divided by 1000.
-#' @param rho The value in the interval [0, 1] that the spatial dependence parameter rho is fixed at if it should not be estimated. If this arugment is NULL then rho is estimated in the model.
+#' @param rho The value in the interval \eqn{[0, 1]} that the spatial dependence parameter rho is fixed at if it should not be estimated. If this arugment is NULL then rho is estimated in the model.
 #' @param verbose Logical; if TRUE, prints progress during the MCMC sampling (default is TRUE).
 #'
 #' @return A list containing the model fit, including posterior samples, fitted values, residuals, and model summary.
@@ -39,6 +39,8 @@
 #' }
 #'
 #' @import coda loo
+#' @importFrom spdep mat2listw n.comp.nb
+#' @importFrom MCMCpack riwish
 #' @export
 
 fit_CARleroux <- function(formula, data = NULL, trials, W,
@@ -125,7 +127,7 @@ fit_CARleroux <- function(formula, data = NULL, trials, W,
 
   # 2.3.4 add Check the kendall's tau (alpha) -------------------------------
 
-  # if(is_null(alpha))
+  # if(is.null(alpha))
   # {
   #   alpha <- runif(1, min = 0, max = 5)
   #   fix_alpha <- FALSE
@@ -146,8 +148,8 @@ fit_CARleroux <- function(formula, data = NULL, trials, W,
   if(is.null(prior_Sigma_df)) prior_Sigma_df <- J+1
   if(is.null(prior_Sigma_scale)) prior_Sigma_scale <- diag(rep(1,J)) / 1000
 
-  # if(is_null(prior_Tau_df)) prior_Tau_df <- J+1
-  # if(is_null(prior_Tau_scale)) prior_Tau_scale <- diag(rep(1,J)) / 1000
+  # if(is.null(prior_Tau_df)) prior_Tau_df <- J+1
+  # if(is.null(prior_Tau_scale)) prior_Tau_scale <- diag(rep(1,J)) / 1000
 
   common_prior_beta_check(prior_beta_mean, prior_beta_var, p)
   common_prior_varmat_check(prior_Sigma_scale, J)
@@ -565,7 +567,7 @@ fit_CARleroux <- function(formula, data = NULL, trials, W,
                         geweke.diag(samples_beta_orig)$z)
   col_name <- rep(NA, p*(J-1))
 
-  if(is_null(colnames(Y))){
+  if(is.null(colnames(Y))){
     for(r in 1:J){
       col_name[((r-1)*p+1):(r*p)] <- paste("Variable ",
                                            r,

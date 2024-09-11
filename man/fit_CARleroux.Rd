@@ -43,7 +43,7 @@ fit_CARleroux(
 
 \item{prior_Sigma_scale}{The prior J times J scale matrix for the Inverse-Wishart prior for Sigma. Defaults to the identity matrix divided by 1000.}
 
-\item{rho}{The value in the interval \link{0, 1} that the spatial dependence parameter rho is fixed at if it should not be estimated. If this arugment is NULL then rho is estimated in the model.}
+\item{rho}{The value in the interval \eqn{[0, 1]} that the spatial dependence parameter rho is fixed at if it should not be estimated. If this arugment is NULL then rho is estimated in the model.}
 
 \item{verbose}{Logical; if TRUE, prints progress during the MCMC sampling (default is TRUE).}
 }

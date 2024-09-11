@@ -3,18 +3,27 @@ Type: Package
 Title: Spatial Generalised Linear Mixed Copula Models for Areal Unit Data
 Version: 0.2.2
 Data: 2024-09-09
-Authors: Mu Li
+Author: Mu Li
 Maintainer: Mu Li <mu.le@anu.edu.au>
 Description: The CARBayesCopula package provides tools for fitting spatial generalized linear mixed models with conditional autoregressive (CAR) structures and copula-based bivariate models, currently supporting a binomial framework. It extends the framework of the CARBayes package (developed by Duncan Lee) to allow for the modeling of spatial dependencies in areal unit data through copula structures. This enables flexible Bayesian inference for spatial data analysis, accommodating spatial autocorrelation and joint modeling of two binomial response variables. The package is particularly useful in fields such as epidemiology, ecology, and social sciences, where spatial dependencies and multivariate outcomes need to be modeled together.
-License: GPL (>= 2)
+License: GPL-3 + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Depends: R (>= 4.3.3)
-Imports: spdep, MCMCpack, loo
+Depends: R (>= 4.3)
+Imports: spdep, MCMCpack, loo, Rcpp, coda
 Suggests: 
-    CARBayes
+    copula,
+    flextable,
+    tidyverse,
+    ggpubr,
+    CARBayes,
+    quarto,
+    knitr,
+    rmarkdown
 LinkingTo: Rcpp, RcppArmadillo, RcppDist
+VignetteBuilder: 
+    quarto
 LazyLoad: yes
 ByteCompile: yes
 URL: https://github.com/MoooooLee/CARBayesCopula

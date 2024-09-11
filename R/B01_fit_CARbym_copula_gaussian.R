@@ -271,7 +271,7 @@ fit_CARbym_copula_gaussian <- function(formula,
   I_triplet <- I_quants$W.triplet
   I_n_triplet <- I_quants$n.triplet
   I_triplet_sum <- I_quants$W.triplet_sum
-  I_triplet_sum <- as_vector(I_triplet_sum)
+  I_triplet_sum <- as.vector(I_triplet_sum)
   I_n_neighbours <- I_quants$n.neighbours
   I_begfin <- I_quants$W.begfin
 

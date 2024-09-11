@@ -28,6 +28,36 @@ Maintainer: Mu Li <mu.li@anu.edu.au>
 }
 
 \references{
+Besag, J. and  York, J and Mollie, A (1991). Bayesian image restoration with two
+applications in spatial statistics. Annals of the Institute of Statistics and
+Mathematics 43, 1-59.
+
+Gelfand, A and Vounatsou, P (2003). Proper multivariate conditional autoregressive
+models for spatial data analysis, Biostatistics, 4, 11-25.
+
+Kavanagh, L., D. Lee, and G. Pryce (2016). Is Poverty Decentralising? Quantifying
+Uncertainty in the Decentralisation of Urban Poverty, Annals of the American
+Association of Geographers, 106, 1286-1298.
+
+Lee, D. and Mitchell, R (2012). Boundary detection in disease mapping studies.
+Biostatistics, 13, 415-426.
+
+Lee, D and Sarran, C  (2015). Controlling for unmeasured confounding and spatial
+misalignment in long-term air pollution and health studies, Environmetrics, 26,
+477-487.
+
+Leroux B, Lei X, Breslow N (2000). "Estimation of Disease Rates in SmallAreas: A
+New Mixed Model for Spatial Dependence." In M Halloran, D Berry (eds.),
+\emph{Statistical Models in Epidemiology, the Environment and Clinical Trials},
+pp. 179-191. Springer-Verlag, New York.
+
+Roberts, G and Rosenthal, J (1998). Optimal scaling of discrete approximations to
+the Langevin diffusions, Journal of the Royal Statistical Society Series B 60,
+255-268.
+
+Sklar, A. (1973). Random variables, joint distribution functions, and copulas. Kybernetika, 9(6), 449-460.
+
+Nelsen, R. B. (2006). An introduction to copulas. Springer.
 }
 \keyword{
   spatial, copula, Bayesian, GLMM, bivariate, CARBayes, binomial, epidemiology
