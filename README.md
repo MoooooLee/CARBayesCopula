@@ -18,6 +18,8 @@ You can only install the pre-released version of `CARBayesCopula` from GitHub:
 devtools::install_github("MoooooLee/CARBayesCopula")
 ```
 
+As the package build by `Rcpp`, it may take a while to install.
+
 ## Features
 
 - **Bivariate Bayesian hierarchical modeling** for spatial areal unit data with binomial responses.
@@ -33,11 +35,11 @@ For more comprehensive details on model formulation, parameter selection, and ad
 
 This project is open-source and available under the GPL-3.0 License.
 
-# Contact
+## Contact
 
 For any inquiries or feedback, please contact Mu Li at [mu.li@anu.edu.au](mu.li@anu.edu.au).
 
-# References
+## References
 
 Eddelbuettel, Dirk, and Romain François. 2011. “Rcpp: Seamless r and c++ Integration.” Journal of Statistical Software 40: 1–18.
 
