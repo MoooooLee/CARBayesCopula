@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.550">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mu">
+<meta name="dcterms.date" content="2024-09-12">
+
+<title>Bivariate Bayesian Hierachical Model with Copula</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="my-vignette_files/libs/clipboard/clipboard.min.js"></script>
+<script src="my-vignette_files/libs/quarto-html/quarto.js"></script>
+<script src="my-vignette_files/libs/quarto-html/popper.min.js"></script>
+<script src="my-vignette_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="my-vignette_files/libs/quarto-html/anchor.min.js"></script>
+<link href="my-vignette_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="my-vignette_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="my-vignette_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="my-vignette_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="my-vignette_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="my-vignette_files/libs/tabwid-1.1.3/tabwid.css" rel="stylesheet">
+<script src="my-vignette_files/libs/tabwid-1.1.3/tabwid.js"></script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#model-formulation" id="toc-model-formulation" class="nav-link active" data-scroll-target="#model-formulation">Model Formulation</a>
+  <ul class="collapse">
+  <li><a href="#bivariate-spatial-models-for-areal-unit-data---binomial-response" id="toc-bivariate-spatial-models-for-areal-unit-data---binomial-response" class="nav-link" data-scroll-target="#bivariate-spatial-models-for-areal-unit-data---binomial-response">Bivariate spatial models for areal unit data - Binomial response</a></li>
+  <li><a href="#copulas" id="toc-copulas" class="nav-link" data-scroll-target="#copulas">Copulas</a></li>
+  </ul></li>
+  <li><a href="#model-implementation-in-the-package" id="toc-model-implementation-in-the-package" class="nav-link" data-scroll-target="#model-implementation-in-the-package">Model Implementation in the Package</a>
+  <ul class="collapse">
+  <li><a href="#package-installation" id="toc-package-installation" class="nav-link" data-scroll-target="#package-installation">Package Installation</a></li>
+  <li><a href="#empirical-copulas-of-residuals" id="toc-empirical-copulas-of-residuals" class="nav-link" data-scroll-target="#empirical-copulas-of-residuals">Empirical Copulas of Residuals</a></li>
+  <li><a href="#bivariate-bayesian-hierarchical-model-with-copula" id="toc-bivariate-bayesian-hierarchical-model-with-copula" class="nav-link" data-scroll-target="#bivariate-bayesian-hierarchical-model-with-copula">Bivariate Bayesian Hierarchical Model with Copula</a></li>
+  <li><a href="#model-comparison-with-bivaraite-gaussian-model-in-carbayes-package" id="toc-model-comparison-with-bivaraite-gaussian-model-in-carbayes-package" class="nav-link" data-scroll-target="#model-comparison-with-bivaraite-gaussian-model-in-carbayes-package">Model Comparison with bivaraite gaussian model in <code>CARBayes</code> package</a></li>
+  <li><a href="#visualization-of-the-results-on-maps" id="toc-visualization-of-the-results-on-maps" class="nav-link" data-scroll-target="#visualization-of-the-results-on-maps">Visualization of the Results on Maps</a></li>
+  </ul></li>
+  
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Bivariate Bayesian Hierachical Model with Copula</h1>
+<p class="subtitle lead">Vignette of <code>CARBayesCopula</code> version 0.2.1</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mu </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 12, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This is a vignette of the R package <code>CARBayesCopula</code> version 0.2.1. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on <a href="https://github.com/MoooooLee/CARBayesCopula">GitHub</a>. The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the <code>Rcpp</code> package and <code>CARBayes</code> package <span class="citation" data-cites="eddelbuettel2011rcpp lee2013carbayes">(<a href="#ref-eddelbuettel2011rcpp" role="doc-biblioref">Eddelbuettel and François 2011</a>; <a href="#ref-lee2013carbayes" role="doc-biblioref">Lee 2013</a>)</span>. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.</p>
+<section id="model-formulation" class="level1">
+<h1>Model Formulation</h1>
+<section id="bivariate-spatial-models-for-areal-unit-data---binomial-response" class="level2">
+<h2 class="anchored" data-anchor-id="bivariate-spatial-models-for-areal-unit-data---binomial-response">Bivariate spatial models for areal unit data - Binomial response</h2>
+<p>The study region <span class="math inline">\(\mathcal{S}\)</span> is divided into <span class="math inline">\(K\)</span> non-overlapping areal units <span class="math inline">\(\mathcal{S}_1, \mathcal{S}_2, \ldots, \mathcal{S}_n\)</span>. The response variables are <span class="math inline">\(\mathbf{y}_{A} = (y_{A,1}, \ldots, y_{A,K})\)</span> and <span class="math inline">\(\mathbf{y}_{B} = (y_{B,1}, \ldots, y_{B,K})\)</span>, and a matrix of covariates <span class="math inline">\(\mathbf{X} = (\mathbf{x_1},\ldots,\mathbf{x_K})\)</span> is available for each areal unit. We can also denote the known offsets by <span class="math inline">\(\mathbf{o} = (o_1,\ldots,o_K)\)</span>. We consider the trial numbers <span class="math inline">\(\mathbf{N}_A = (N_{A,1},\ldots,N_{A,K})\)</span> and <span class="math inline">\(\mathbf{N}_B = (N_{B,1},\ldots,N_{B,K})\)</span>, which are known for each areal unit.</p>
+<p>Here we noticed that missing, <code>NA</code> values are allowed in the response variables <span class="math inline">\((\mathbf{Y}_A, \mathbf{Y}_B)\)</span>. However, the missing values in covariates, offsets or trial numbers are not allowed. Trials numbers should be positive integers.</p>
+<p>The response variables are binomial distributed, i.e., <span class="math display">\[
+\begin{align}
+y_{A,k} &amp;\sim \text{Binomial}(N_k, p_{A,k}) \\
+y_{B,k} &amp;\sim \text{Binomial}(N_k, p_{B,k})
+\end{align}
+\]</span></p>
+<p>The logit of the probability of success <span class="math inline">\(\pi_{A,k}\)</span> and <span class="math inline">\(\pi_{B,k}\)</span> are modeled as <span class="math display">\[
+\begin{align}
+logit(p_{A,k}) &amp;= \mathbf{x}_k^T\boldsymbol{\beta}_A + \phi_{A,k} \\
+logit(p_{B,k}) &amp;= \mathbf{x}_k^T\boldsymbol{\beta}_B + \phi_{B,k}
+\end{align}
+\]</span></p>
+<p>where <span class="math inline">\(\boldsymbol{\beta}_A\)</span> and <span class="math inline">\(\boldsymbol{\beta}_B\)</span> are the fixed effects, and <span class="math inline">\(\phi_{A,k}\)</span> and <span class="math inline">\(\phi_{B,k}\)</span> are the structured random effects. The structured random effects are modeled by a conditional autoregressive (CAR) prior proposed by Leroux <span class="citation" data-cites="leroux2000estimation">(<a href="#ref-leroux2000estimation" role="doc-biblioref">Leroux, Lei, and Breslow 2000</a>)</span>, which is defined by a neighborhood matrix <span class="math inline">\(\mathbf{W}\)</span>, the spatial dependence parameter <span class="math inline">\(\rho\)</span>, and a pair of precision parameters <span class="math inline">\(\tau_A\)</span> and <span class="math inline">\(\tau_B\)</span>. The CAR prior is defined as <span class="math display">\[
+\begin{align}
+\phi_{A,k} | \mathbf{\phi}_{A,-k}, \rho, \mathbf{W}, \tau_A &amp;\sim \text{N}\left( \frac{\rho \sum_{i=1}^K w_{kj}\phi_{A,i}}{\rho \sum_{i=1}^K w_{ki} +1 - \rho}, \frac{\tau_A^2}{\rho \sum_{i=1}^K w_{ki} +1 - \rho}\right) \\
+\phi_{B,k} | \mathbf{\phi}_{B,-k}, \rho, \mathbf{W}, \tau_B &amp;\sim \text{N}\left(\frac{\rho \sum_{i=1}^K w_{kj}\phi_{B,i}}{\rho \sum_{i=1}^K w_{ki} +1-\rho}, \frac{\tau_B^2}{\rho\sum_{i=1}^K w_{ki}+1-\rho}\right)
+\end{align}
+\]</span> The parameter <span class="math inline">\(\rho\)</span> is the spatial dependence parameter, which controls the strength of the spatial dependence, which can be either predetermined or estimated within the model. An increase in <span class="math inline">\(\rho\)</span> denotes a proportional augmentation in the influence of spatial effects relative to the unstructured component of random effects. The precision parameters <span class="math inline">\(\tau_A\)</span> and <span class="math inline">\(\tau_B\)</span> are the precision parameters of the structured random effects <span class="math inline">\(\phi_{A,k}\)</span> and <span class="math inline">\(\phi_{B,k}\)</span>, respectively. The neighborhood matrix <span class="math inline">\(\mathbf{W}\)</span> can be a binary matrix that defines the neighborhood structure of the areal units. The diagonal elements of <span class="math inline">\(\mathbf{W}\)</span> are zeros, and the off-diagonal elements are ones if the corresponding areal units are neighbors, and zeros otherwise.</p>
+<p>After we formulate the marginal distribution of <span class="math inline">\(\phi_{A,k}\)</span> and <span class="math inline">\(\phi_{B,k}\)</span>, we can define the joint distribution of <span class="math inline">\((\phi_{A,k}, \phi_{B,k})\)</span> as a bivariate distribution. The dependence between the two response variables is modeled by a copula. The copula is a bivariate distribution function with uniform marginals <span class="citation" data-cites="nelsen2006introduction">(<a href="#ref-nelsen2006introduction" role="doc-biblioref">Nelsen 2006</a>)</span>. Here we only consider copulas that can be determined by one parameter <span class="math inline">\(\alpha\)</span>, which can be written as <span class="math display">\[
+\begin{align}
+(\phi_{A,k}, \phi_{B,k}) | \alpha &amp;\sim \text{Cop}_{C(\alpha)}(\phi_{A,k}, \phi_{B,k})
+\end{align}
+\]</span> where <span class="math inline">\(\text{Cop}_{C(\alpha)}\)</span> is the choice of copula function <span class="math inline">\(C(.)\)</span> with parameter <span class="math inline">\(\alpha\)</span>, which controls the strength and the type of the dependence. However, based on the choice of the copula, the parameter <span class="math inline">\(\alpha\)</span> can have different interpretations <span class="citation" data-cites="genest1993statistical">(<a href="#ref-genest1993statistical" role="doc-biblioref">Genest and Rivest 1993</a>)</span>. The copula parameter <span class="math inline">\(\alpha\)</span> can be either predetermined or estimated within the model.</p>
+</section>
+<section id="copulas" class="level2">
+<h2 class="anchored" data-anchor-id="copulas">Copulas</h2>
+<p>Copulas help us to decompose the joint distribution of two random variables into the marginal distributions and the copula function, which can be defined by Skalar’s theorem clearly <span class="citation" data-cites="sklar1973random">(<a href="#ref-sklar1973random" role="doc-biblioref">Sklar 1973</a>)</span>. <span class="math display">\[
+\begin{align}
+F_{A,B}(x,y) &amp;= C_{\alpha}(F_A(x), F_B(y))\\
+&amp;= C_{\alpha}(u, v)\\
+\end{align}
+\]</span> where <span class="math inline">\(F_{A,B}(x,y)\)</span> is the cumulative probability function of the joint distribution of random variables <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>, <span class="math inline">\(F_A(x)\)</span> and <span class="math inline">\(F_B(y)\)</span> are cumulative probability function of the marginal distributions each of them, and <span class="math inline">\(C_{\alpha}\)</span> is the copula function with parameter <span class="math inline">\(\alpha\)</span>, where the input of the copula function is the cumulative probability <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> of the marginal distributions.</p>
+<p>The choice of copula function is crucial in the modeling of the dependence between the two random variables. One of the important characteristics of the copula function is the tail dependence, which is the probability that both random variables are in the lower tail <span class="math inline">\(\lambda_L\)</span> and the upper tail <span class="math inline">\(\lambda_U\)</span> of their marginal distributions.</p>
+<p>There are many copula functions available in the literature, and each of them has its own characteristics. Here we only consider some of the copula functions that are famous and widely used in the literature <span class="citation" data-cites="genest1993statistical">(<a href="#ref-genest1993statistical" role="doc-biblioref">Genest and Rivest 1993</a>)</span>. The copula functions that are available in the package are as follows <span class="citation" data-cites="nelsen2006introduction">(<a href="#ref-nelsen2006introduction" role="doc-biblioref">Nelsen 2006</a>)</span>:</p>
+<table class="table">
+<caption>List of copulas available in the package</caption>
+<colgroup>
+<col style="width: 15%">
+<col style="width: 54%">
+<col style="width: 15%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Copula</th>
+<th style="text-align: center;">Bivariate Copula Function</th>
+<th style="text-align: center;"><span class="math inline">\(\lambda_L\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(\lambda_U\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clayton</td>
+<td style="text-align: center;"><span class="math inline">\((u^{-\alpha} + v^{-\alpha} - 1)^{-1/\alpha}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(2^{-1/\alpha}\)</span></td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td>Frank</td>
+<td style="text-align: center;"><span class="math inline">\(-\alpha^{-1} \log(\frac{1-e^{-\alpha} - (1-e^{-\alpha u }) (1-e^{-\alpha v})}{1-e^{-\alpha}})\)</span></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="odd">
+<td>Gumbel</td>
+<td style="text-align: center;"><span class="math inline">\(\exp\{(-((-\log u)^\alpha + (-\log v)^\alpha)^{1/\alpha})\}\)</span></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;"><span class="math inline">\(2-2^{1/\alpha}\)</span></td>
+</tr>
+<tr class="even">
+<td>Joe</td>
+<td style="text-align: center;"><span class="math inline">\(1 - (1-u)^{\alpha} (1-v)^{\alpha}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1 - 2^{-1/\alpha}\)</span></td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="odd">
+<td>Gaussian</td>
+<td style="text-align: center;"><span class="math inline">\(\Phi_{\alpha}(\Phi^{-1}(u), \Phi^{-1}(v))\)</span></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+<p>The Clayton copula is used to model the lower tail dependence, the Frank copula is used to model the symmetric dependence, the Gumbel copula is used to model the upper tail dependence, the Joe copula is used to model the asymmetric dependence, and the Gaussian copula is used to model the linear correlation between the two random variables, where <span class="math inline">\(\alpha\)</span> in Gaussian copula is the correlation coefficient.</p>
+<p>The inverse copulas, which are the mirror image of the original copulas, are also available in the package, which can be used to model the opposite tail dependence.</p>
+</section>
+</section>
+<section id="model-implementation-in-the-package" class="level1">
+<h1>Model Implementation in the Package</h1>
+<p>We would like to show the implementation of the model in the package by a example. The example is based on the dataset <code>SA3_dataset</code> and the neighborhood matrix <code>SA3_W</code> that are available in the package. The dataset <code>SA3_dataset</code> contains the response variables <code>Health</code> and <code>Social</code>, <code>Emotional</code>, <code>Language</code>, <code>Communication</code> which are five difference domains of measure of children development that collceted by the Australian Early Development Census (AEDC) <span class="citation" data-cites="AEDC_Data">(<a href="#ref-AEDC_Data" role="doc-biblioref">AEDC 2024</a>)</span>. The covariates contains four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit <span class="citation" data-cites="abs_2021_seifa">(<a href="#ref-abs_2021_seifa" role="doc-biblioref">Australian Bureau of Statistics 2021</a>)</span>. The neighborhood matrix <code>SA3_W</code> is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions <span class="citation" data-cites="ASGS2021">(<a href="#ref-ASGS2021" role="doc-biblioref">ABS 2021</a>)</span>. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.</p>
+<p>In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables <code>Social</code> and <code>Language</code>, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix <code>SA3_W</code> and the covariates <code>IRSD</code>.</p>
+<section id="package-installation" class="level2">
+<h2 class="anchored" data-anchor-id="package-installation">Package Installation</h2>
+<p>The package can be installed from GitHub by the following code:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"MoooooLee/CARBayesCopula"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>As the package is still under development, the package is not available on CRAN.</p>
+<p>For this example, we also need to library packages <code>tidyverse</code> for data analysis and visualization. We also need to library the package <code>spdep</code> for spatial dependence analysis, and the package <code>flextable</code> for table formatting, and the package <code>ggpubr</code> for advanced visualization.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CARBayesCopula)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(spdep)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(copula)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(flextable)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="empirical-copulas-of-residuals" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-copulas-of-residuals">Empirical Copulas of Residuals</h2>
+<p>We first would like to show the empirical copulas of the residuals between the response variables <code>Social</code> and <code>Language</code> after fitting the simple generalized linear model (GLM) with the covariate <code>IRSD</code> for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the dataset</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"aedc_sa3"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>SA3_dataset_GLM <span class="ot">&lt;-</span> aedc_sa3 <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SA3_NAME21, IRSD,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>         Social_Vulnerable_21, Language_Vulnerable_21,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>         Social_N_21, Language_N_21) <span class="sc">%&gt;%</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">social_vulnerable =</span> Social_Vulnerable_21,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">language_vulnerable =</span> Language_Vulnerable_21,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">social_trial =</span> Social_N_21,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">language_trial =</span> Language_N_21) <span class="sc">%&gt;%</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(social_vulnerable, language_vulnerable) </span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(SA3_dataset_GLM) <span class="sc">%&gt;%</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flextable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="tabwid"><style>.cl-7d79c060{}.cl-7d5c3a40{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-7d75593a{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-7d755944{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-7d756d3a{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7d756d44{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7d756d45{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7d756d46{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7d756d4e{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7d756d4f{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-7d79c060"><thead><tr style="overflow-wrap:break-word;"><th class="cl-7d756d3a"><p class="cl-7d75593a"><span class="cl-7d5c3a40">SA3_NAME21</span></p></th><th class="cl-7d756d44"><p class="cl-7d755944"><span class="cl-7d5c3a40">IRSD</span></p></th><th class="cl-7d756d44"><p class="cl-7d755944"><span class="cl-7d5c3a40">social_vulnerable</span></p></th><th class="cl-7d756d44"><p class="cl-7d755944"><span class="cl-7d5c3a40">language_vulnerable</span></p></th><th class="cl-7d756d44"><p class="cl-7d755944"><span class="cl-7d5c3a40">social_trial</span></p></th><th class="cl-7d756d44"><p class="cl-7d755944"><span class="cl-7d5c3a40">language_trial</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-7d756d45"><p class="cl-7d75593a"><span class="cl-7d5c3a40">Queanbeyan</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,061.1772</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">70</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">51</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">790</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">790</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7d756d45"><p class="cl-7d75593a"><span class="cl-7d5c3a40">Snowy Mountains</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,017.0323</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">21</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">18</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">212</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">212</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7d756d45"><p class="cl-7d75593a"><span class="cl-7d5c3a40">South Coast</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">985.3111</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">60</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">68</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">649</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">638</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7d756d45"><p class="cl-7d75593a"><span class="cl-7d5c3a40">Goulburn - Mulwaree</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">978.8543</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">32</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">30</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">410</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">410</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7d756d45"><p class="cl-7d75593a"><span class="cl-7d5c3a40">Young - Yass</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,008.7233</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">31</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">35</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">397</span></p></td><td class="cl-7d756d46"><p class="cl-7d755944"><span class="cl-7d5c3a40">397</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7d756d4e"><p class="cl-7d75593a"><span class="cl-7d5c3a40">Gosford</span></p></td><td class="cl-7d756d4f"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,019.8630</span></p></td><td class="cl-7d756d4f"><p class="cl-7d755944"><span class="cl-7d5c3a40">160</span></p></td><td class="cl-7d756d4f"><p class="cl-7d755944"><span class="cl-7d5c3a40">102</span></p></td><td class="cl-7d756d4f"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,966</span></p></td><td class="cl-7d756d4f"><p class="cl-7d755944"><span class="cl-7d5c3a40">1,966</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+<p>After we fit the GLM for the response variables <code>Social</code> and <code>Language</code>, we can calculate the residuals and the pseudo-observations of the residuals. The pseudo-observations of the residuals can be the results</p>
+<p>. The empirical copulas can be visualized by a scatter plot of the pseudo-observations of the residuals.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">res_social =</span> (<span class="fu">cbind</span>(social_vulnerable, social_trial <span class="sc">-</span> social_vulnerable) <span class="sc">~</span> IRSD) <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">glm</span>(<span class="at">family =</span> binomial, <span class="at">data =</span> SA3_dataset_GLM) <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">residuals</span>(<span class="at">type =</span> <span class="st">"pearson"</span>),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">res_language =</span> (<span class="fu">cbind</span>(language_vulnerable, language_trial <span class="sc">-</span> language_vulnerable) <span class="sc">~</span> IRSD) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">glm</span>(<span class="at">family =</span> binomial, <span class="at">data =</span> SA3_dataset_GLM) <span class="sc">%&gt;%</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">residuals</span>(<span class="at">type =</span> <span class="st">"pearson"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>) </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>pobsres <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">pobsres_social =</span> <span class="fu">pobs</span>(res<span class="sc">$</span>res_social),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">pobsres_language =</span> <span class="fu">pobs</span>(res<span class="sc">$</span>res_language)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>) </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>res_pobsres <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(res, pobsres)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>res_pobsres_samples <span class="ot">&lt;-</span> res_pobsres <span class="sc">%&gt;%</span> <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">5</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> res_pobsres <span class="sc">%&gt;%</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">y =</span> res_language)) <span class="sc">+</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density_2d_filled</span>(<span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">bins =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">xend =</span> <span class="dv">10</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> res_language, <span class="at">yend =</span> res_language),</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">xend =</span> res_social,</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">yend =</span> res_language),</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">shape =</span> <span class="dv">15</span>,</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span> </span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_rug</span>(<span class="at">sides =</span> <span class="st">"br"</span>) <span class="sc">+</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>)) <span class="sc">+</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Blues"</span>) <span class="sc">+</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">" "</span>, <span class="at">y =</span> <span class="st">"Residuals in Language"</span>) <span class="sc">+</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>plot2 <span class="ot">&lt;-</span> res_pobsres <span class="sc">%&gt;%</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> pobsres_language, <span class="at">y =</span> res_language)) <span class="sc">+</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">xend =</span> pobsres_language,</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> res_language, <span class="at">yend =</span> res_language),</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> pobsres_language, <span class="at">xend =</span> pobsres_language,</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">yend =</span> res_language),</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">shape =</span> <span class="dv">15</span>,</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>)) <span class="sc">+</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">" "</span>, <span class="at">y =</span> <span class="st">" "</span>) <span class="sc">+</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>plot3 <span class="ot">&lt;-</span> res_pobsres <span class="sc">%&gt;%</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">y =</span> pobsres_social)) <span class="sc">+</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">xend =</span> <span class="dv">10</span>,</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> pobsres_social, <span class="at">yend =</span> pobsres_social),</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> res_social, <span class="at">xend =</span> res_social,</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> pobsres_social, <span class="at">yend =</span> <span class="dv">10</span>),</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">shape =</span> <span class="dv">15</span>,</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Residuals in Social"</span>, <span class="at">y =</span> <span class="st">"Probability integral transformed</span><span class="sc">\n</span><span class="st">residuals in Social "</span>) <span class="sc">+</span></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>plot4 <span class="ot">&lt;-</span> res_pobsres <span class="sc">%&gt;%</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> pobsres_language, <span class="at">y =</span> pobsres_social)) <span class="sc">+</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density_2d_filled</span>(<span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">bins =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.6</span>) <span class="sc">+</span> </span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">xend =</span> pobsres_language,</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> pobsres_social, <span class="at">yend =</span> pobsres_social),</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> pobsres_language, <span class="at">xend =</span> pobsres_language,</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>                   <span class="at">y =</span> pobsres_social, <span class="at">yend =</span> <span class="dv">10</span>),</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>               <span class="at">linewidth =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> res_pobsres_samples,</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">shape =</span> <span class="dv">15</span>,</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_rug</span>(<span class="at">sides =</span> <span class="st">"tl"</span>) <span class="sc">+</span></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Blues"</span>) <span class="sc">+</span></span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Probability integral transformd</span><span class="sc">\n</span><span class="st">residuals in Language"</span>, <span class="at">y =</span> <span class="st">" "</span>) <span class="sc">+</span></span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(plot1, plot2, plot3, plot4,</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>          <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">nrow =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate_figure</span>(</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">top =</span> <span class="fu">text_grob</span>(<span class="st">"Residuals and Probability Integral Transforms"</span>,</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>                    <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">14</span>),</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">bottom =</span> <span class="fu">text_grob</span>(<span class="st">"between Social and Langauage Vulnerable"</span>,</span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>                       <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">12</span>)</span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/B02-res_pobsres-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We may notice that the empirical copulas of the residuals between the response variables <code>Social</code> and <code>Language</code> are not symmetric and not linear, which indicates that the copula function is needed to model the complex dependence between the two response variables.</p>
+<p>Then we show some theoretical copulas that are available in the package. The copulas are Gaussian, Frank, Clayton, Gumbel, and Joe copulas. The copulas are visualized by the density plot of the bivariate distribution of the copula.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">2000</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">normalCopula</span>(<span class="fl">0.7</span>, <span class="at">dim =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rCopula</span>(n,.) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Copula =</span> <span class="st">"Gaussian (alpha=0.7)"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">frankCopula</span>(<span class="dv">3</span>, <span class="at">dim =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rCopula</span>(n,.) <span class="sc">%&gt;%</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">Copula =</span> <span class="st">"Frank (alpha=3)"</span>),</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">claytonCopula</span>(<span class="fl">1.5</span>, <span class="at">dim =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rCopula</span>(n,.) <span class="sc">%&gt;%</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">Copula =</span> <span class="st">"Clayton (alpha=1.5)"</span>),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gumbelCopula</span>(<span class="dv">2</span>, <span class="at">dim =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rCopula</span>(n,.) <span class="sc">%&gt;%</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">Copula =</span> <span class="st">"Gumbel (alpha=2)"</span>),</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">joeCopula</span>(<span class="dv">2</span>, <span class="at">dim =</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rCopula</span>(n,.) <span class="sc">%&gt;%</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">Copula =</span> <span class="st">"Joe (alpha=2)"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density_2d_filled</span>(<span class="fu">aes</span>(<span class="at">x =</span> V1,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                             <span class="at">y =</span> V2),</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>                         <span class="at">bins =</span> <span class="dv">9</span>) <span class="sc">+</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Blues"</span>) <span class="sc">+</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>Copula)  <span class="sc">+</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Density plot of copulas"</span>) <span class="sc">+</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),  <span class="co"># Hide x-axis labels</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>(), <span class="co"># Hide x-axis ticks</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_blank</span>(),  <span class="co"># Hide y-axis labels</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/B03-copulas-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the density plot of the copulas, we can see that the Gaussian copula is symmetric, while the Gumbel, Joe and Clayton copulas are asymmetric, which may be more suitable to model the dependence between the two response variables.</p>
+</section>
+<section id="bivariate-bayesian-hierarchical-model-with-copula" class="level2">
+<h2 class="anchored" data-anchor-id="bivariate-bayesian-hierarchical-model-with-copula">Bivariate Bayesian Hierarchical Model with Copula</h2>
+<p>In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. As we noticed, the residuals between the response variables <code>Social</code> and <code>Language</code> are not symmetric and not linear, we would like to try Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix <code>aedc_W_sa3</code> that is available in the package.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">width =</span> <span class="dv">120</span>) <span class="co"># Set the output width to a larger value</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">"aedc_W_sa3"</span>) <span class="co"># Load the neighborhood matrix</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>input_formula <span class="ot">&lt;-</span> <span class="fu">cbind</span>(Social_Vulnerable_21, Language_Vulnerable_21) <span class="sc">~</span> IRSD</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>input_trials <span class="ot">&lt;-</span> <span class="fu">cbind</span>(aedc_sa3<span class="sc">$</span>Social_N_21, aedc_sa3<span class="sc">$</span>Language_N_21)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>) <span class="co"># Set the seed for reproducibility</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>model_fit_clayton <span class="ot">&lt;-</span> <span class="fu">fit_CARleroux_copula</span>(<span class="at">formula =</span> input_formula,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">trials =</span> input_trials,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">W =</span> aedc_W_sa3,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">data =</span> aedc_sa3,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">copula =</span> <span class="st">"clayton"</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">burnin =</span> <span class="dv">20000</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">n_sample =</span> <span class="dv">30000</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">thin =</span> <span class="dv">5</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>model_fit_invgumbel <span class="ot">&lt;-</span> <span class="fu">fit_CARleroux_copula</span>(<span class="at">formula =</span> input_formula,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">trials =</span> input_trials,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">W =</span> aedc_W_sa3,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">data =</span> aedc_sa3,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">copula =</span> <span class="st">"inversegumbel"</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">burnin =</span> <span class="dv">20000</span>,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">n_sample =</span> <span class="dv">30000</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">thin =</span> <span class="dv">5</span>,</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>It may take a while to fit the model, as the model is fitted with MCMC simulation. After the model is fitted, we can summarize the model by the <code>summary</code> function. The summary of the model includes the posterior means, standard deviations, and the 95% credible intervals of the parameters, the DIC value, and the effective sample size of the parameters. The Deviance Information Criterion (DIC) and Leave-One-Out information criterion (LOOIC) are provided to compare the goodness of fit of the models <span class="citation" data-cites="vehtari2020loo">(<a href="#ref-vehtari2020loo" role="doc-biblioref">Vehtari et al. 2020</a>)</span>. We prefer the model with a smaller DIC and LOOIC value.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_fit_clayton)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+#################
+#### Model fitted
+#################
+Likelihood model - Binomial (logit link function) 
+Random effects model - Clayton Leroux MCAR
+Regression equation - cbind(Social_Vulnerable_21, Language_Vulnerable_21) ~ IRSD
+Number of missing observations - 10
+
+############
+#### Results
+############
+Posterior quantities and DIC
+
+                                      Median    2.5%   97.5% n_effective geweke.diag
+Social_Vulnerable_21 - (Intercept)    2.4423  1.9027  3.0037        86.7         3.4
+Social_Vulnerable_21 - IRSD          -0.0047 -0.0053 -0.0042        86.5        -3.5
+Language_Vulnerable_21 - (Intercept)  4.6810  4.0833  5.3284        54.5         4.0
+Language_Vulnerable_21 - IRSD        -0.0073 -0.0080 -0.0067        54.5        -4.0
+tau2-1                                0.1295  0.0958  0.1779       116.7         0.2
+tau2-2                                0.1638  0.1239  0.2211       110.4         0.2
+rho                                   0.6207  0.4536  0.8329       187.5        -1.8
+alpha                                 1.8650  1.2255  2.6803       175.5         0.5
+
+DIC =  4848.398     p.d =  404.5616     LMPL =  -2527.22     LOOIC =  4979.63 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_fit_invgumbel)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+#################
+#### Model fitted
+#################
+Likelihood model - Binomial (logit link function) 
+Random effects model - Inverse Gumbel Copula Leroux MCAR
+Regression equation - cbind(Social_Vulnerable_21, Language_Vulnerable_21) ~ IRSD
+Number of missing observations - 10
+
+############
+#### Results
+############
+Posterior quantities and DIC
+
+                                      Median    2.5%   97.5% n_effective geweke.diag
+Social_Vulnerable_21 - (Intercept)    2.3137  1.8851  2.8402        98.3         1.1
+Social_Vulnerable_21 - IRSD          -0.0046 -0.0051 -0.0041        99.2        -1.1
+Language_Vulnerable_21 - (Intercept)  4.6070  4.1198  5.2352        77.3         2.1
+Language_Vulnerable_21 - IRSD        -0.0072 -0.0079 -0.0067        77.6        -2.1
+tau2-1                                0.1340  0.0975  0.1806       120.7        -1.9
+tau2-2                                0.1645  0.1212  0.2264       119.2        -0.6
+rho                                   0.6760  0.4943  0.9139       167.2        -2.0
+alpha                                 2.2657  1.8632  2.9173       198.3         0.2
+
+DIC =  4835.821     p.d =  386.9251     LMPL =  -2513.57     LOOIC =  4961.71 </code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison-with-bivaraite-gaussian-model-in-carbayes-package" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison-with-bivaraite-gaussian-model-in-carbayes-package">Model Comparison with bivaraite gaussian model in <code>CARBayes</code> package</h2>
+<p>We would like to compare the bivariate Bayesian hierarchical model with copula with the bivariate Gaussian model in the <code>CARBayes</code> package. Here we fit all the copulas that are available in the package, which are Gaussian, Clayton, Joe, Gumbel, Frank, and their inverse copulas and the bivariate Gaussian model. We would like to compare the DIC and LOOIC values of the models to see which model is better to fit the data.</p>
+<p>As it may take a long time to fit all the models, we only show the results here, and model fitting are saved in the RDS files.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="tabwid"><style>.cl-dadeaefa{}.cl-dad6ede6{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-dad6edfa{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-dad6ee04{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(255, 165, 0, 1.00);background-color:transparent;}.cl-dad6ee05{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 255, 1.00);background-color:transparent;}.cl-dad6ee0e{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(255, 0, 0, 1.00);background-color:transparent;}.cl-dad9cac0{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-dad9caca{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-dad9e140{width:1.364in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e141{width:0.88in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e14a{width:0.752in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e14b{width:0.931in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e154{width:1.126in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e155{width:1.364in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e156{width:0.88in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e15e{width:0.752in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e15f{width:0.931in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e168{width:1.126in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e169{width:1.364in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e16a{width:0.88in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e172{width:0.752in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e173{width:0.931in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e174{width:1.126in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e17c{width:1.364in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e17d{width:0.88in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e17e{width:0.752in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e17f{width:0.931in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e186{width:1.126in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e187{width:1.364in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e188{width:0.88in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e190{width:0.752in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e191{width:0.931in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dad9e19a{width:1.126in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-dadeaefa"><thead><tr style="overflow-wrap:break-word;"><th class="cl-dad9e140"><p class="cl-dad9cac0"><span class="cl-dad6ede6">copula</span></p></th><th class="cl-dad9e141"><p class="cl-dad9caca"><span class="cl-dad6ede6">DIC</span></p></th><th class="cl-dad9e14a"><p class="cl-dad9caca"><span class="cl-dad6ede6">p.d</span></p></th><th class="cl-dad9e141"><p class="cl-dad9caca"><span class="cl-dad6ede6">WAIC</span></p></th><th class="cl-dad9e14a"><p class="cl-dad9caca"><span class="cl-dad6ede6">p.w</span></p></th><th class="cl-dad9e14b"><p class="cl-dad9caca"><span class="cl-dad6ede6">LMPL</span></p></th><th class="cl-dad9e154"><p class="cl-dad9caca"><span class="cl-dad6ede6">loglikelihood</span></p></th><th class="cl-dad9e141"><p class="cl-dad9caca"><span class="cl-dad6ede6">LOOIC</span></p></th><th class="cl-dad9e14b"><p class="cl-dad9caca"><span class="cl-dad6ede6">elpd</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6edfa">clayton</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6edfa">4,845.05</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6edfa">404.68</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ee04">4,803.15</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6edfa">272.14</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,517.37</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,017.85</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6edfa">4,962.21</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,481.10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e169"><p class="cl-dad9cac0"><span class="cl-dad6ede6">frank</span></p></td><td class="cl-dad9e16a"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,843.79</span></p></td><td class="cl-dad9e172"><p class="cl-dad9caca"><span class="cl-dad6ede6">392.14</span></p></td><td class="cl-dad9e16a"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,819.85</span></p></td><td class="cl-dad9e172"><p class="cl-dad9caca"><span class="cl-dad6ede6">277.22</span></p></td><td class="cl-dad9e173"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,509.27</span></p></td><td class="cl-dad9e174"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,029.75</span></p></td><td class="cl-dad9e16a"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,962.64</span></p></td><td class="cl-dad9e173"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,481.32</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6ede6">gaussian</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,834.44</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">373.30</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,821.18</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">272.31</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,501.35</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6ee05">-2,043.92</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,957.04</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,478.52</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6ede6">gumbel</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,852.36</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">392.43</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,829.78</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">278.87</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,512.80</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,033.75</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,973.34</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,486.67</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6ede6">inverseclayton</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,872.24</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">413.37</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,841.88</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">287.05</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,542.93</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,022.75</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">5,008.71</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,504.36</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6edfa">inversegumbel</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6edfa">4,834.95</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6edfa">385.54</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6edfa">4,806.99</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6edfa">269.85</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,492.10</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,031.93</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ee0e">4,943.95</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6edfa">-2,471.97</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6ede6">inversejoe</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,848.33</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">405.55</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,808.59</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">274.12</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,533.75</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,018.62</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,978.57</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,489.29</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e155"><p class="cl-dad9cac0"><span class="cl-dad6ede6">joe</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,871.01</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">413.50</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,836.29</span></p></td><td class="cl-dad9e15e"><p class="cl-dad9caca"><span class="cl-dad6ede6">284.25</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,527.92</span></p></td><td class="cl-dad9e168"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,022.00</span></p></td><td class="cl-dad9e156"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,994.35</span></p></td><td class="cl-dad9e15f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,497.18</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-dad9e17c"><p class="cl-dad9cac0"><span class="cl-dad6ede6">MVS</span></p></td><td class="cl-dad9e17d"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,828.12</span></p></td><td class="cl-dad9e17e"><p class="cl-dad9caca"><span class="cl-dad6ede6">374.78</span></p></td><td class="cl-dad9e17d"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,806.38</span></p></td><td class="cl-dad9e17e"><p class="cl-dad9caca"><span class="cl-dad6ede6">267.09</span></p></td><td class="cl-dad9e17f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,500.66</span></p></td><td class="cl-dad9e186"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,039.27</span></p></td><td class="cl-dad9e17d"><p class="cl-dad9caca"><span class="cl-dad6ede6">4,944.72</span></p></td><td class="cl-dad9e17f"><p class="cl-dad9caca"><span class="cl-dad6ede6">-2,472.36</span></p></td></tr></tbody><tfoot><tr style="overflow-wrap:break-word;"><td colspan="9" class="cl-dad9e187"><p class="cl-dad9cac0"><span class="cl-dad6ede6">Social - Language</span></p></td></tr></tfoot></table></div>
+</div>
+</div>
+<p>We noticed that the bivariate Bayesian hierarchical model with copula with the Clayton copula has the smallest WAIC value and the inverse of Gumbel copula has the smallest LOOIC value. Those two models both better fit the data than the bivariate Gaussian model (denote as MVS).</p>
+</section>
+<section id="visualization-of-the-results-on-maps" class="level2">
+<h2 class="anchored" data-anchor-id="visualization-of-the-results-on-maps">Visualization of the Results on Maps</h2>
+<p>We can visualize the fitted results as the model-based estimation on maps to see the spatial distribution of the response variables and the structured random effects comparing to the direct estimation. The model-based estimation is the estimation of the vulnerability prevalence in the Social and Language domains, which is estimated by the inverse Gumbel copula (based on the criteria of LOOIC value). The direct estimation is estimated by the direct proportion of the vulnerable children to the total children in the areal units.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>est_model <span class="ot">&lt;-</span> model_fit_invgumbel<span class="sc">$</span>fitted_values</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(est_model) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"social_est_model"</span>, <span class="st">"language_est_model"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>aedc_sa3_results <span class="ot">&lt;-</span> aedc_sa3 <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SA3_NAME21, SA4_NAME21, GCC_NAME21, STE_NAME21,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>         IRSD, </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>         Social_Vulnerable_21, Language_Vulnerable_21,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>         Social_N_21, Language_N_21) <span class="sc">%&gt;%</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(est_model) <span class="sc">%&gt;%</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">social_est_dir =</span> Social_Vulnerable_21 <span class="sc">/</span> Social_N_21,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">language_est_dir =</span> Language_Vulnerable_21 <span class="sc">/</span> Language_N_21,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">social_est_model =</span> social_est_model <span class="sc">/</span> Social_N_21,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">language_est_model =</span> language_est_model <span class="sc">/</span> Language_N_21) <span class="sc">%&gt;%</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">contains</span>(<span class="fu">c</span>(<span class="st">"est_dir"</span>,<span class="st">"est_model"</span>)),</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"domain_method"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"est"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(domain_method) <span class="sc">%&gt;%</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">est_cat =</span> <span class="fu">factor</span>(<span class="fu">ntile</span>(est, <span class="dv">10</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>We first visualize the vulnerability prevalence in the Social and Language domains estimated by the direct proportion on maps.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>aedc_sa3_results <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(domain_method <span class="sc">==</span> <span class="st">"social_est_dir"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> est_cat),</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"RdYlGn"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">na.value =</span> <span class="st">"grey"</span>) <span class="sc">+</span> </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vulnerability prevalence in Social"</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Estimated by direct proportion"</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="st">"Vulnerability Levels (Deciles)"</span>) <span class="sc">+</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/C03-maps_dir-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>aedc_sa3_results <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(domain_method <span class="sc">==</span> <span class="st">"language_est_dir"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> est_cat),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"RdYlGn"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">na.value =</span> <span class="st">"grey"</span>) <span class="sc">+</span> </span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vulnerability prevalence in Language"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Estimated by direct proportion"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="st">"Vulnerability Levels (Deciles)"</span>) <span class="sc">+</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/C03-maps_dir-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Then, we visualize the vulnerability prevalence in the Social and Language domains estimated by the inverse Gumbel copula on maps.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>aedc_sa3_results <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(domain_method <span class="sc">==</span> <span class="st">"social_est_model"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> est_cat),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"RdYlGn"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">na.value =</span> <span class="st">"grey"</span>) <span class="sc">+</span> </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vulnerability prevalence in Social"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Estimated by model with inverse Gumbel copula"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="st">"Vulnerability Levels (Deciles)"</span>) <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/C03-maps_inversegumbel-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>aedc_sa3_results <span class="sc">%&gt;%</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(domain_method <span class="sc">==</span> <span class="st">"language_est_model"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> est_cat),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"RdYlGn"</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">direction =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">na.value =</span> <span class="st">"grey"</span>) <span class="sc">+</span> </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vulnerability prevalence in Language"</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Estimated by model with inverse Gumbel copula"</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="st">"Vulnerability Levels (Deciles)"</span>) <span class="sc">+</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="my-vignette_files/figure-html/C03-maps_inversegumbel-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="references" class="level1 appendix"><h2 class="anchored quarto-appendix-heading">References</h2><div class="quarto-appendix-contents">
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-ASGS2021" class="csl-entry" role="listitem">
+ABS. 2021. <span>“Australian Statistical Geography Standard (ASGS) Edition 3.”</span> Australian Bureau of Statistics. <a href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026">https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026</a>.
+</div>
+<div id="ref-AEDC_Data" class="csl-entry" role="listitem">
+AEDC. 2024. <span>“Australian Early Development Census Data.”</span> <a href="https://www.aedc.gov.au/data">https://www.aedc.gov.au/data</a>.
+</div>
+<div id="ref-abs_2021_seifa" class="csl-entry" role="listitem">
+Australian Bureau of Statistics. 2021. <span>“<span class="nocase">Socio-Economic Indexes for Areas (SEIFA), Australia</span>.”</span> <a href="https://www.abs.gov.au/statistics/people/people-and-communities/socio-economic-indexes-areas-seifa-australia/latest-release" class="uri">https://www.abs.gov.au/statistics/people/people-and-communities/socio-economic-indexes-areas-seifa-australia/latest-release</a>.
+</div>
+<div id="ref-eddelbuettel2011rcpp" class="csl-entry" role="listitem">
+Eddelbuettel, Dirk, and Romain François. 2011. <span>“Rcpp: Seamless r and c++ Integration.”</span> <em>Journal of Statistical Software</em> 40: 1–18.
+</div>
+<div id="ref-genest1993statistical" class="csl-entry" role="listitem">
+Genest, Christian, and Louis-Paul Rivest. 1993. <span>“Statistical Inference Procedures for Bivariate Archimedean Copulas.”</span> <em>Journal of the American Statistical Association</em> 88 (423): 1034–43.
+</div>
+<div id="ref-lee2013carbayes" class="csl-entry" role="listitem">
+Lee, Duncan. 2013. <span>“CARBayes: An r Package for Bayesian Spatial Modeling with Conditional Autoregressive Priors.”</span> <em>Journal of Statistical Software</em> 55 (13): 1–24.
+</div>
+<div id="ref-leroux2000estimation" class="csl-entry" role="listitem">
+Leroux, Brian G, Xingye Lei, and Norman Breslow. 2000. <span>“Estimation of Disease Rates in Small Areas: A New Mixed Model for Spatial Dependence.”</span> In <em>Statistical Models in Epidemiology, the Environment, and Clinical Trials</em>, 179–91. Springer.
+</div>
+<div id="ref-nelsen2006introduction" class="csl-entry" role="listitem">
+Nelsen, Roger B. 2006. <em>An Introduction to Copulas</em>. Springer.
+</div>
+<div id="ref-sklar1973random" class="csl-entry" role="listitem">
+Sklar, Abe. 1973. <span>“Random Variables, Joint Distribution Functions, and Copulas.”</span> <em>Kybernetika</em> 9 (6): 449–60.
+</div>
+<div id="ref-vehtari2020loo" class="csl-entry" role="listitem">
+Vehtari, Aki, Jonah Gabry, Mans Magnusson, Yuling Yao, Paul-Christian Bürkner, Topi Paananen, Andrew Gelman, et al. 2020. <span>“Loo: Efficient Leave-One-Out Cross-Validation and WAIC for Bayesian Models.”</span> <em>R Package Version</em> 2 (1): 12.
+</div>
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
