@@ -1,0 +1,520 @@
+---
+title: "Bivariate Bayesian Hierachical Model with Copula"
+subtitle: "Vignette of `CARBayesCopula` version 0.2.1"
+author: Mu
+date: today
+bibliography: ref.bib
+output: html_vignette
+format: 
+  html:
+    code-fold: true
+    toc: true   
+vignette: >
+  %\VignetteIndexEntry{Bivariate Bayesian Hierachical Model with Copula}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+theme: flaty
+---
+
+This is a vignette of the R package `CARBayesCopula` version 0.2.1. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
+
+# Model Formulation
+
+## Bivariate spatial models for areal unit data - Binomial response
+
+The study region $\mathcal{S}$ is divided into $K$ non-overlapping areal units $\mathcal{S}_1, \mathcal{S}_2, \ldots, \mathcal{S}_n$. The response variables are $\mathbf{y}_{A} = (y_{A,1}, \ldots, y_{A,K})$ and $\mathbf{y}_{B} = (y_{B,1}, \ldots, y_{B,K})$, and a matrix of covariates $\mathbf{X} = (\mathbf{x_1},\ldots,\mathbf{x_K})$ is available for each areal unit. We can also denote the known offsets by $\mathbf{o} = (o_1,\ldots,o_K)$. We consider the trial numbers $\mathbf{N}_A = (N_{A,1},\ldots,N_{A,K})$ and $\mathbf{N}_B = (N_{B,1},\ldots,N_{B,K})$, which are known for each areal unit.
+
+Here we noticed that missing, `NA` values are allowed in the response variables $(\mathbf{Y}_A, \mathbf{Y}_B)$. However, the missing values in covariates, offsets or trial numbers are not allowed. Trials numbers should be positive integers.
+
+The response variables are binomial distributed, i.e., $$
+\begin{align}
+y_{A,k} &\sim \text{Binomial}(N_k, p_{A,k}) \\
+y_{B,k} &\sim \text{Binomial}(N_k, p_{B,k})
+\end{align}
+$$
+
+The logit of the probability of success $\pi_{A,k}$ and $\pi_{B,k}$ are modeled as $$
+\begin{align}
+logit(p_{A,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_A + \phi_{A,k} \\
+logit(p_{B,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_B + \phi_{B,k}
+\end{align}
+$$
+
+where $\boldsymbol{\beta}_A$ and $\boldsymbol{\beta}_B$ are the fixed effects, and $\phi_{A,k}$ and $\phi_{B,k}$ are the structured random effects. The structured random effects are modeled by a conditional autoregressive (CAR) prior proposed by Leroux [@leroux2000estimation], which is defined by a neighborhood matrix $\mathbf{W}$, the spatial dependence parameter $\rho$, and a pair of precision parameters $\tau_A$ and $\tau_B$. The CAR prior is defined as $$
+\begin{align}
+\phi_{A,k} | \mathbf{\phi}_{A,-k}, \rho, \mathbf{W}, \tau_A &\sim \text{N}\left( \frac{\rho \sum_{i=1}^K w_{kj}\phi_{A,i}}{\rho \sum_{i=1}^K w_{ki} +1 - \rho}, \frac{\tau_A^2}{\rho \sum_{i=1}^K w_{ki} +1 - \rho}\right) \\
+\phi_{B,k} | \mathbf{\phi}_{B,-k}, \rho, \mathbf{W}, \tau_B &\sim \text{N}\left(\frac{\rho \sum_{i=1}^K w_{kj}\phi_{B,i}}{\rho \sum_{i=1}^K w_{ki} +1-\rho}, \frac{\tau_B^2}{\rho\sum_{i=1}^K w_{ki}+1-\rho}\right)
+\end{align}
+$$ The parameter $\rho$ is the spatial dependence parameter, which controls the strength of the spatial dependence, which can be either predetermined or estimated within the model. An increase in $\rho$ denotes a proportional augmentation in the influence of spatial effects relative to the unstructured component of random effects. The precision parameters $\tau_A$ and $\tau_B$ are the precision parameters of the structured random effects $\phi_{A,k}$ and $\phi_{B,k}$, respectively. The neighborhood matrix $\mathbf{W}$ can be a binary matrix that defines the neighborhood structure of the areal units. The diagonal elements of $\mathbf{W}$ are zeros, and the off-diagonal elements are ones if the corresponding areal units are neighbors, and zeros otherwise.
+
+After we formulate the marginal distribution of $\phi_{A,k}$ and $\phi_{B,k}$, we can define the joint distribution of $(\phi_{A,k}, \phi_{B,k})$ as a bivariate distribution. The dependence between the two response variables is modeled by a copula. The copula is a bivariate distribution function with uniform marginals [@nelsen2006introduction]. Here we only consider copulas that can be determined by one parameter $\alpha$, which can be written as 
+$$
+\begin{align}
+(\phi_{A,k}, \phi_{B,k}) | \alpha &\sim \text{Cop}_{C(\alpha)}(\phi_{A,k}, \phi_{B,k})
+\end{align}
+$$ 
+where $\text{Cop}_{C(\alpha)}$ is the choice of copula function $C(.)$ with parameter $\alpha$, which controls the strength and the type of the dependence. 
+However, based on the choice of the copula, the parameter $\alpha$ can have different interpretations [@genest1993statistical]. The copula parameter $\alpha$ can be either predetermined or estimated within the model.
+
+## Copulas
+
+Copulas help us to decompose the joint distribution of two random variables into the marginal distributions and the copula function, which can be defined by Skalar's theorem clearly [@sklar1973random].
+$$
+\begin{align}
+F_{A,B}(x,y) &= C_{\alpha}(F_A(x), F_B(y))\\
+&= C_{\alpha}(u, v)\\
+\end{align}
+$$ 
+where $F_{A,B}(x,y)$ is the cumulative probability function of the joint distribution of random variables $A$ and $B$, $F_A(x)$ and $F_B(y)$ are cumulative probability function of the marginal distributions each of them, and $C_{\alpha}$ is the copula function with parameter $\alpha$, where the input of the copula function is the cumulative probability $u$ and $v$ of the marginal distributions.
+
+The choice of copula function is crucial in the modeling of the dependence between the two random variables. One of the important characteristics of the copula function is the tail dependence, which is the probability that both random variables are in the lower tail $\lambda_L$ and the upper tail $\lambda_U$ of their marginal distributions.
+
+There are many copula functions available in the literature, and each of them has its own characteristics. Here we only consider some of the copula functions that are famous and widely used in the literature [@genest1993statistical]. The copula functions that are available in the package are as follows [@nelsen2006introduction]:
+
+| Copula   |                                    Bivariate Copula Function                                    |     $\lambda_L$     |   $\lambda_U$    |
+|-----------|:-------------------------------------:|:---------:|:---------:|
+| Clayton  |                          $(u^{-\alpha} + v^{-\alpha} - 1)^{-1/\alpha}$                          |   $2^{-1/\alpha}$   |        0         |
+| Frank    | $-\alpha^{-1} \log(\frac{1-e^{-\alpha} - (1-e^{-\alpha u }) (1-e^{-\alpha v})}{1-e^{-\alpha}})$ |          0          |        0         |
+| Gumbel   |                  $\exp\{(-((-\log u)^\alpha + (-\log v)^\alpha)^{1/\alpha})\}$                  |          0          | $2-2^{1/\alpha}$ |
+| Joe      |                               $1 - (1-u)^{\alpha} (1-v)^{\alpha}$                               | $1 - 2^{-1/\alpha}$ |        0         |
+| Gaussian |                           $\Phi_{\alpha}(\Phi^{-1}(u), \Phi^{-1}(v))$                           |          0          |        0         |
+
+: List of copulas available in the package
+
+The Clayton copula is used to model the lower tail dependence, the Frank copula is used to model the symmetric dependence, the Gumbel copula is used to model the upper tail dependence, the Joe copula is used to model the asymmetric dependence, and the Gaussian copula is used to model the linear correlation between the two random variables, where $\alpha$ in Gaussian copula is the correlation coefficient.
+
+The inverse copulas, which are the mirror image of the original copulas, are also available in the package, which can be used to model the opposite tail dependence.
+
+# Model Implementation in the Package
+
+We would like to show the implementation of the model in the package by a example. The example is based on the dataset `SA3_dataset` and the neighborhood matrix `SA3_W` that are available in the package. The dataset `SA3_dataset` contains the response variables `Health` and `Social`, `Emotional`, `Language`, `Communication` which are five difference domains of measure of children development that collceted by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contains four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `SA3_W` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
+
+In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables `Social` and `Language`, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix `SA3_W` and the covariates `IRSD`.
+
+## Package Installation
+
+The package can be installed from GitHub by the following code:
+
+```{r}
+#| label: A00-install
+#| include: FALSE
+#| eval: FALSE
+devtools::install_github("MoooooLee/CARBayesCopula")
+
+```
+
+```{r}
+#| label: A01-install
+#| include: TRUE
+#| eval: FALSE
+devtools::install_github("MoooooLee/CARBayesCopula")
+
+```
+
+As the package is still under development, the package is not available on CRAN.
+
+For this example, we also need to library packages `tidyverse` for data analysis and visualization. We also need to library the package `spdep` for spatial dependence analysis, and the package `flextable` for table formatting, and the package `ggpubr` for advanced visualization.
+
+```{r}
+#| label: A02-library
+#| include: TRUE
+#| output: FALSE
+library(CARBayesCopula)
+library(tidyverse)
+library(spdep)
+library(copula)
+library(flextable)
+library(ggpubr)
+
+```
+
+## Empirical Copulas of Residuals
+
+We first would like to show the empirical copulas of the residuals between the response variables `Social` and `Language` after fitting the simple generalized linear model (GLM) with the covariate `IRSD` for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.
+
+```{r}
+#| label: B01-read_data
+#| include: TRUE
+
+# Load the dataset
+data("aedc_sa3")
+SA3_dataset_GLM <- aedc_sa3 %>%
+  st_drop_geometry() %>%
+  select(SA3_NAME21, IRSD,
+         Social_Vulnerable_21, Language_Vulnerable_21,
+         Social_N_21, Language_N_21) %>%
+  rename(social_vulnerable = Social_Vulnerable_21,
+         language_vulnerable = Language_Vulnerable_21,
+         social_trial = Social_N_21,
+         language_trial = Language_N_21) %>%
+  drop_na(social_vulnerable, language_vulnerable) 
+
+head(SA3_dataset_GLM) %>%
+  flextable()
+```
+
+After we fit the GLM for the response variables `Social` and `Language`, we can calculate the residuals and the pseudo-observations of the residuals. The pseudo-observations of the residuals can be the results
+
+. The empirical copulas can be visualized by a scatter plot of the pseudo-observations of the residuals.
+
+```{r}
+#| label: B02-res_pobsres
+#| include: TRUE
+res <- tibble(
+  res_social = (cbind(social_vulnerable, social_trial - social_vulnerable) ~ IRSD) %>%
+    glm(family = binomial, data = SA3_dataset_GLM) %>%
+    residuals(type = "pearson"),
+  res_language = (cbind(language_vulnerable, language_trial - language_vulnerable) ~ IRSD) %>%
+    glm(family = binomial, data = SA3_dataset_GLM) %>%
+    residuals(type = "pearson")
+) 
+
+pobsres <- tibble(
+  pobsres_social = pobs(res$res_social),
+  pobsres_language = pobs(res$res_language)
+) 
+
+res_pobsres <- bind_cols(res, pobsres)
+res_pobsres_samples <- res_pobsres %>% slice_head(n = 5)
+
+plot1 <- res_pobsres %>%
+  ggplot(aes(x = res_social, y = res_language)) +
+  geom_density_2d_filled(alpha = 1, bins = 9) +
+  geom_point(size = 0.6) +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = res_social, xend = 10,
+                   y = res_language, yend = res_language),
+               linewidth = 0.5, color = "red") +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = res_social, xend = res_social,
+                   y = -10, yend = res_language),
+               linewidth = 0.5, color = "red") +
+  geom_point(data = res_pobsres_samples,
+             size = 1.5, shape = 15,
+             color = "red") + 
+  geom_rug(sides = "br") +
+  coord_cartesian(xlim = c(-5, 5), ylim = c(-5, 5)) +
+  scale_fill_brewer(palette = "Blues") +
+  labs(x = " ", y = "Residuals in Language") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+plot2 <- res_pobsres %>%
+  ggplot(aes(x = pobsres_language, y = res_language)) +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = -1, xend = pobsres_language,
+                   y = res_language, yend = res_language),
+               linewidth = 0.5, color = "red") +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = pobsres_language, xend = pobsres_language,
+                   y = -10, yend = res_language),
+               linewidth = 0.5, color = "red") +
+  geom_point(size = 0.6) +
+  geom_point(data = res_pobsres_samples,
+             size = 1.5, shape = 15,
+             color = "red") +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-5, 5)) +
+  labs(x = " ", y = " ") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+plot3 <- res_pobsres %>%
+  ggplot(aes(x = res_social, y = pobsres_social)) +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = res_social, xend = 10,
+                   y = pobsres_social, yend = pobsres_social),
+               linewidth = 0.5, color = "red") +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = res_social, xend = res_social,
+                   y = pobsres_social, yend = 10),
+               linewidth = 0.5, color = "red") +
+  geom_point(size = 0.6) +
+  geom_point(data = res_pobsres_samples,
+             size = 1.5, shape = 15,
+             color = "red") +
+  coord_cartesian(xlim = c(-5, 5), ylim = c(0, 1)) +
+  labs(x = "Residuals in Social", y = "Probability integral transformed\nresiduals in Social ") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+plot4 <- res_pobsres %>%
+  ggplot(aes(x = pobsres_language, y = pobsres_social)) +
+  geom_density_2d_filled(alpha = 1, bins = 9) +
+  geom_point(size = 0.6) + 
+  geom_segment(data = res_pobsres_samples,
+               aes(x = -10, xend = pobsres_language,
+                   y = pobsres_social, yend = pobsres_social),
+               linewidth = 0.5, color = "red") +
+  geom_segment(data = res_pobsres_samples,
+               aes(x = pobsres_language, xend = pobsres_language,
+                   y = pobsres_social, yend = 10),
+               linewidth = 0.5, color = "red") +
+  geom_point(data = res_pobsres_samples,
+             size = 1.5, shape = 15,
+             color = "red") +
+  geom_rug(sides = "tl") +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  scale_fill_brewer(palette = "Blues") +
+  labs(x = "Probability integral transformd\nresiduals in Language", y = " ") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+ggarrange(plot1, plot2, plot3, plot4,
+          ncol = 2, nrow = 2) %>%
+  annotate_figure(
+    top = text_grob("Residuals and Probability Integral Transforms",
+                    face = "bold", size = 14),
+    bottom = text_grob("between Social and Langauage Vulnerable",
+                       face = "bold", size = 12)
+  )
+```
+
+We may notice that the empirical copulas of the residuals between the response variables `Social` and `Language` are not symmetric and not linear, which indicates that the copula function is needed to model the complex dependence between the two response variables.
+
+Then we show some theoretical copulas that are available in the package. The copulas are Gaussian, Frank, Clayton, Gumbel, and Joe copulas. The copulas are visualized by the density plot of the bivariate distribution of the copula.
+
+```{r}
+#| warning: false
+#| label: B03-copulas
+#| include: TRUE
+
+n <- 2000
+normalCopula(0.7, dim = 2) %>%
+  rCopula(n,.) %>%
+  as_tibble() %>%
+  mutate(Copula = "Gaussian (alpha=0.7)") %>%
+  bind_rows(
+    frankCopula(3, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Frank (alpha=3)"),
+    claytonCopula(1.5, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Clayton (alpha=1.5)"),
+    gumbelCopula(2, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Gumbel (alpha=2)"),
+    joeCopula(2, dim = 2) %>%
+      rCopula(n,.) %>%
+      as_tibble() %>%
+      mutate(Copula = "Joe (alpha=2)")
+  ) %>%
+  ggplot() +
+  geom_density_2d_filled(aes(x = V1,
+                             y = V2),
+                         bins = 9) +
+  coord_fixed(ratio = 1) +
+  scale_fill_brewer(palette = "Blues") +
+  facet_wrap(~Copula)  +
+  labs(title = "Density plot of copulas") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),  # Hide x-axis labels
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(), # Hide x-axis ticks
+    axis.text.y = element_blank(),  # Hide y-axis labels
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none"
+  )
+```
+
+Based on the density plot of the copulas, we can see that the Gaussian copula is symmetric, while the Gumbel, Joe and Clayton copulas are asymmetric, which may be more suitable to model the dependence between the two response variables.
+
+## Bivariate Bayesian Hierarchical Model with Copula
+
+In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. As we noticed, the residuals between the response variables `Social` and `Language` are not symmetric and not linear, we would like to try Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix `aedc_W_sa3` that is available in the package.
+
+```{r}
+#| label: C01-BHM
+#| include: TRUE
+
+options(width = 120) # Set the output width to a larger value
+data("aedc_W_sa3") # Load the neighborhood matrix
+
+input_formula <- cbind(Social_Vulnerable_21, Language_Vulnerable_21) ~ IRSD
+input_trials <- cbind(aedc_sa3$Social_N_21, aedc_sa3$Language_N_21)
+
+set.seed(1234) # Set the seed for reproducibility
+model_fit_clayton <- fit_CARleroux_copula(formula = input_formula,
+                                         trials = input_trials,
+                                         W = aedc_W_sa3,
+                                         data = aedc_sa3,
+                                         copula = "clayton",
+                                         burnin = 200,
+                                         n_sample = 300,
+                                         thin = 5,
+                                         verbose = FALSE)
+model_fit_invgumbel <- fit_CARleroux_copula(formula = input_formula,
+                                          trials = input_trials,
+                                          W = aedc_W_sa3,
+                                          data = aedc_sa3,
+                                          copula = "inversegumbel",
+                                         burnin = 200,
+                                         n_sample = 300,
+                                         thin = 5,
+                                         verbose = FALSE)
+```
+It may take a while to fit the model, as the model is fitted with MCMC simulation. After the model is fitted, we can summarize the model by the `summary` function. The summary of the model includes the posterior means, standard deviations, and the 95% credible intervals of the parameters, the DIC value, and the effective sample size of the parameters. The Deviance Information Criterion (DIC) and Leave-One-Out information criterion (LOOIC) are provided to compare the goodness of fit of the models [@vehtari2020loo]. We prefer the model with a smaller DIC and LOOIC value.
+```{r}
+#| label: C02-summary
+#| include: TRUE
+summary(model_fit_clayton)
+summary(model_fit_invgumbel)
+```
+
+## Model Comparison with bivaraite gaussian model in `CARBayes` package
+
+We would like to compare the bivariate Bayesian hierarchical model with copula with the bivariate Gaussian model in the `CARBayes` package. Here we fit all the copulas that are available in the package, which are Gaussian, Clayton, Joe, Gumbel, Frank, and their inverse copulas and the bivariate Gaussian model. We would like to compare the DIC and LOOIC values of the models to see which model is better to fit the data.
+
+As it may take a long time to fit all the models, we only show the results here, and model fitting are saved in the RDS files.
+```{r}
+#| label: C02-load_rds
+#| include: FALSE
+#| eval: TRUE
+
+main_table <- readRDS("RDS/A05_main_table.RDS")
+perf_table_SA3 <- readRDS("RDS/A08_perf_table_SA3.RDS")
+perf_table_SA3byIRSD <- readRDS("RDS/A08_perf_table_SA3byIRSD.RDS")
+
+table_ic <- main_table %>%
+  select(var1, var2, copula, ic) %>%
+  unnest(ic) %>% 
+  pivot_wider(names_from = ic, values_from = value) %>%
+  nest(data = -(var1:var2)) 
+
+```
+```{r}
+#| label: C02-comparison
+#| echo: false
+table_ic$data[[10]] %>%
+    as_tibble() %>%
+    flextable(.)  %>%
+    colformat_double(digits = 2) %>%
+    color(i = ~LOOIC == min(LOOIC),
+          j = ~LOOIC,
+          color = "red") %>%
+    color(i = ~WAIC == min(WAIC),
+          j = ~WAIC,
+          color = "orange") %>%
+    color(i = ~loglikelihood == min(loglikelihood),
+          j = ~loglikelihood,
+          color = "blue") %>%
+    bold(i = ~ (LOOIC == min(LOOIC)|
+                  WAIC == min(WAIC))) %>%
+    add_footer_lines(str_c(table_ic$var2[10],
+                           " - ",
+                           table_ic$var1[10])) %>%
+    autofit()
+```
+
+We noticed that the bivariate Bayesian hierarchical model with copula with the Clayton copula has the smallest WAIC value and the inverse of Gumbel copula has the smallest LOOIC value. Those two models both better fit the data than the bivariate Gaussian model (denote as MVS).
+
+## Visualization of the Results on Maps
+
+We can visualize the fitted results as the model-based estimation on maps to see the spatial distribution of the response variables and the structured random effects comparing to the direct estimation. The model-based estimation is the estimation of the vulnerability prevalence in the Social and Language domains, which is estimated by the inverse Gumbel copula (based on the criteria of LOOIC value). The direct estimation is estimated by the direct proportion of the vulnerable children to the total children in the areal units.
+
+
+```{r}
+#| label: C03-visualization
+#| include: TRUE
+
+est_model <- model_fit_invgumbel$fitted_values
+colnames(est_model) <- c("social_est_model", "language_est_model")
+
+aedc_sa3_results <- aedc_sa3 %>%
+  select(SA3_NAME21, SA4_NAME21, GCC_NAME21, STE_NAME21,
+         IRSD, 
+         Social_Vulnerable_21, Language_Vulnerable_21,
+         Social_N_21, Language_N_21) %>%
+  bind_cols(est_model) %>%
+  mutate(social_est_dir = Social_Vulnerable_21 / Social_N_21,
+         language_est_dir = Language_Vulnerable_21 / Language_N_21,
+         social_est_model = social_est_model / Social_N_21,
+         language_est_model = language_est_model / Language_N_21) %>%
+  pivot_longer(cols = contains(c("est_dir","est_model")),
+               names_to = "domain_method",
+               values_to = "est") %>%
+  group_by(domain_method) %>%
+  mutate(est_cat = factor(ntile(est, 10)))
+
+```
+We first visualize the vulnerability prevalence in the Social and Language domains estimated by the direct proportion on maps.
+
+```{r}
+#| label: C03-maps_dir
+#| include: TRUE
+
+aedc_sa3_results %>%
+  filter(domain_method == "social_est_dir") %>%
+  ggplot() +
+  geom_sf(aes(fill = est_cat),
+          color = "black") +
+  scale_fill_brewer(palette = "RdYlGn",
+                    direction = -1,
+                    na.value = "grey") + 
+  labs(title = "Vulnerability prevalence in Social",
+       subtitle = "Estimated by direct proportion",
+       fill = "Vulnerability Levels (Deciles)") +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+aedc_sa3_results %>%
+  filter(domain_method == "language_est_dir") %>%
+  ggplot() +
+  geom_sf(aes(fill = est_cat),
+          color = "black") +
+  scale_fill_brewer(palette = "RdYlGn",
+                    direction = -1,
+                    na.value = "grey") + 
+  labs(title = "Vulnerability prevalence in Language",
+       subtitle = "Estimated by direct proportion",
+       fill = "Vulnerability Levels (Deciles)") +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+```
+
+Then, we visualize the vulnerability prevalence in the Social and Language domains estimated by the inverse Gumbel copula on maps.
+
+
+```{r}
+#| label: C03-maps_inversegumbel
+#| include: TRUE
+aedc_sa3_results %>%
+  filter(domain_method == "social_est_model") %>%
+  ggplot() +
+  geom_sf(aes(fill = est_cat),
+          color = "black") +
+  scale_fill_brewer(palette = "RdYlGn",
+                    direction = -1,
+                    na.value = "grey") + 
+  labs(title = "Vulnerability prevalence in Social",
+       subtitle = "Estimated by model with inverse Gumbel copula",
+       fill = "Vulnerability Levels (Deciles)") +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+aedc_sa3_results %>%
+  filter(domain_method == "language_est_model") %>%
+  ggplot() +
+  geom_sf(aes(fill = est_cat),
+          color = "black") +
+  scale_fill_brewer(palette = "RdYlGn",
+                    direction = -1,
+                    na.value = "grey") + 
+  labs(title = "Vulnerability prevalence in Language",
+       subtitle = "Estimated by model with inverse Gumbel copula",
+       fill = "Vulnerability Levels (Deciles)") +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+```
+
+# References {.appendix}
+
+::: {#refs}
+:::
+
