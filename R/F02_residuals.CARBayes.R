@@ -17,7 +17,7 @@ residuals.CARBayes <- function(object, type="pearson", ...)
 
   #### The multivariate models provides lists the univariate models provide matrices
 
-  if(class(residuals)=="list")
+  if(inherits(residuals, "list"))
   {
     #### Return one of two types of residuals
     if(type=="response")
