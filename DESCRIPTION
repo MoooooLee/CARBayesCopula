@@ -1,7 +1,7 @@
 Package: CARBayesCopula
 Type: Package
 Title: Spatial Generalised Linear Mixed Copula Models for Areal Unit Data
-Version: 0.2.1
+Version: 0.2.2
 Data: 2024-09-09
 Authors: Mu Li
 Maintainer: Mu Li <mu.le@anu.edu.au>

@@ -494,7 +494,7 @@ fit_CARleroux_copula_joe <- function(formula,
   ##### end timer
   if(verbose)
   {
-    cat("\nSummarising results_")
+    cat("\nSummarising results.")
     close(progressBar)
   }else
   {}
