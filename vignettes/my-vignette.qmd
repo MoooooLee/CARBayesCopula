@@ -33,7 +33,7 @@ y_{B,k} &\sim \text{Binomial}(N_k, p_{B,k})
 \end{align}
 $$
 
-The logit of the probability of success $\p_{A,k}$ and $\p_{B,k}$ are modeled as $$
+The logit of the probability of success $p_{A,k}$ and $p_{B,k}$ are modeled as $$
 \begin{align}
 logit(p_{A,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_A + \phi_{A,k} \\
 logit(p_{B,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_B + \phi_{B,k}
