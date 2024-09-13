@@ -16,7 +16,7 @@ vignette: >
 theme: flaty
 ---
 
-This is a vignette of the R package `CARBayesCopula` version 0.2.1. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
+This is a vignette of the R package `CARBayesCopula` version 0.2.2. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
 
 # Model Formulation
 
@@ -33,7 +33,7 @@ y_{B,k} &\sim \text{Binomial}(N_k, p_{B,k})
 \end{align}
 $$
 
-The logit of the probability of success $\pi_{A,k}$ and $\pi_{B,k}$ are modeled as $$
+The logit of the probability of success $\p_{A,k}$ and $\p_{B,k}$ are modeled as $$
 \begin{align}
 logit(p_{A,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_A + \phi_{A,k} \\
 logit(p_{B,k}) &= \mathbf{x}_k^T\boldsymbol{\beta}_B + \phi_{B,k}
