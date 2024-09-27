@@ -302,7 +302,7 @@ List INVClaytonalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
   NumericVector oldlikebit(nsites), newlikebit(nsites);
   double oldhasting, newhasting;
   double propalpha, hasting, acceptance;
-  // double oldpriorbit, newpriorbit;
+  double oldpriorbit, newpriorbit;
 
   //Update each random effect in turn
   //Generate the proposal distribution mean and purpose a value
@@ -338,7 +338,9 @@ List INVClaytonalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
     oldlikebit[j] = ClaytonDensity2(INVLCDF_current, INVCDF_current, alpha, nvar) + sum(LPDF_current);
     newlikebit[j] = ClaytonDensity2(INVLCDF_current, INVCDF_current, propalpha, nvar) + sum(LPDF_current);
   }
-  //Prior Ratio - Assume unif prior
+  //Prior Ratio - Assume trancnorm normal from 0, with sd large sd = 1000
+  oldpriorbit = 0.5*pow(alpha,2)/pow(1000,2);
+  newpriorbit = 0.5*pow(propalpha,2)/pow(1000,2);
 
   // Hasting
   // oldhasting = d_truncnorm(alpha, propalpha, alpha_tune, 0, 20, 1);
@@ -348,7 +350,7 @@ List INVClaytonalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
   hasting = oldhasting-newhasting;
   // hasting = 0;
   // Accept or reject the value
-  acceptance = exp(sum(newlikebit - oldlikebit) + hasting);
+  acceptance = exp(sum(newlikebit - oldlikebit) + newpriorbit - oldpriorbit + hasting);
 
   if(runif(1)[0] <= acceptance)
   {

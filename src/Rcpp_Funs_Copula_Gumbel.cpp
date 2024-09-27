@@ -306,7 +306,7 @@ List GumbelalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
   NumericVector sumphi(nvar), fcmean(nvar);
   NumericVector LCDF_current(nvar), LPDF_current(nvar);
   NumericVector oldlikebit(nsites), newlikebit(nsites);
-  double oldhasting, newhasting;
+  double oldhasting, newhasting, oldpriorbit, newpriorbit;
   double propalpha, hasting, acceptance;
   // double oldpriorbit, newpriorbit;
 
@@ -344,7 +344,9 @@ List GumbelalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
     oldlikebit[j] = GumbelDensity(LCDF_current, alpha) + sum(LPDF_current);
     newlikebit[j] = GumbelDensity(LCDF_current, propalpha) + sum(LPDF_current);
   }
-  //Prior Ratio - Assume unif prior
+  //Prior Ratio - Assume trancnorm normal from 1, with sd large sd = 1000
+  oldpriorbit = 0.5*pow(alpha-1,2)/pow(1000,2);
+  newpriorbit = 0.5*pow(propalpha-1,2)/pow(1000,2);
 
   // Hasting
   // oldhasting = d_truncnorm(alpha, propalpha, alpha_tune, 0, 20, 1);
@@ -354,7 +356,7 @@ List GumbelalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
   hasting = oldhasting-newhasting;
   // hasting = 0;
   // Accept or reject the value
-  acceptance = exp(sum(newlikebit - oldlikebit) + hasting);
+  acceptance = exp(sum(newlikebit - oldlikebit) + newpriorbit - oldpriorbit + hasting);
 
   if(runif(1)[0] <= acceptance)
   {
