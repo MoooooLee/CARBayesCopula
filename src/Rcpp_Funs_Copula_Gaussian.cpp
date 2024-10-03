@@ -405,8 +405,8 @@ List GaussianalphaupdateRW(NumericMatrix Wtriplet, NumericMatrix Wbegfin,
   //Prior Ratio - Assume unif prior
 
   //Hasting
-  oldhasting = 1-propalpha*propalpha;
-  newhasting = 1-alpha*alpha;
+  oldhasting = log(1-propalpha*propalpha);
+  newhasting = log(1-alpha*alpha);
   hasting = oldhasting - newhasting;
   // hasting = 0;
   // Accept or reject the value
