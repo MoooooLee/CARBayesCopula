@@ -329,7 +329,7 @@ In this section we would like to show the implementation of the bivariate Bayesi
 
 ```{r}
 #| label: C01-BHM
-#| include: TRUE
+#| include: FALSE
 
 options(width = 120) # Set the output width to a larger value
 
