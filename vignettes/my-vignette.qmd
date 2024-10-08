@@ -1,6 +1,6 @@
 ---
 title: "Bivariate Bayesian Hierachical Model with Copula"
-subtitle: "Vignette of `CARBayesCopula` version 0.2.1"
+subtitle: "Vignette of `CARBayesCopula` version 0.2.5"
 author: Mu
 date: today
 bibliography: ref.bib
@@ -16,7 +16,7 @@ vignette: >
 theme: flaty
 ---
 
-This is a vignette of the R package `CARBayesCopula` version 0.2.2. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
+This is a vignette of the R package `CARBayesCopula` version 0.2.5. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
 
 # Model Formulation
 
@@ -87,9 +87,9 @@ The inverse copulas, which are the mirror image of the original copulas, are als
 
 # Model Implementation in the Package
 
-We would like to show the implementation of the model in the package by a example. The example is based on the dataset `SA3_dataset` and the neighborhood matrix `SA3_W` that are available in the package. The dataset `SA3_dataset` contains the response variables `Health` and `Social`, `Emotional`, `Language`, `Communication` which are five difference domains of measure of children development that collceted by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contains four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `SA3_W` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
+We would like to show the implementation of the model in the package by a example. The example is based on the dataset `aedc2021_sa3` and the neighborhood matrix `aedc_W_sa3` that are available in the package. The dataset `aedc2021_sa3` contains the response variables `health` and `social`, `emotional`, `language`, `communication` which are five difference domains of measure of children development that collected by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contains four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `aedc_W_sa3` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
 
-In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables `Social` and `Language`, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix `SA3_W` and the covariates `IRSD`.
+In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables `social` and `language`, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix `aedc_W_sa3` and the covariates `IRSD`.
 
 ## Package Installation
 
@@ -130,42 +130,42 @@ library(ggpubr)
 
 ## Empirical Copulas of Residuals
 
-We first would like to show the empirical copulas of the residuals between the response variables `Social` and `Language` after fitting the simple generalized linear model (GLM) with the covariate `IRSD` for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.
+We first would like to show the empirical copulas of the residuals between the response variables `social` and `language` after fitting the simple generalized linear model (GLM) with the covariate `IRSD` for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.
 
 ```{r}
 #| label: B01-read_data
 #| include: TRUE
 
 # Load the dataset
-data("aedc_sa3")
-SA3_dataset_GLM <- aedc_sa3 %>%
-  st_drop_geometry() %>%
-  select(SA3_NAME21, IRSD,
-         Social_Vulnerable_21, Language_Vulnerable_21,
-         Social_N_21, Language_N_21) %>%
-  rename(social_vulnerable = Social_Vulnerable_21,
-         language_vulnerable = Language_Vulnerable_21,
-         social_trial = Social_N_21,
-         language_trial = Language_N_21) %>%
-  drop_na(social_vulnerable, language_vulnerable) 
+data("aedc2021_sa3")
 
-head(SA3_dataset_GLM) %>%
+aedc2021_sa3_glm <- aedc2021_sa3 %>%
+  filter(domain %in% c("social", "language")) %>%
+  pivot_wider(names_from = "domain",
+              values_from = c("vulnerable", "N"),
+              names_glue = "{domain}_{.value}") %>%
+  drop_na() %>%
+  select(SA3_NAME21, IRSD, social_vulnerable, social_N,
+         language_vulnerable, language_N)
+  
+head(aedc2021_sa3_glm) %>%
   flextable()
 ```
 
-After we fit the GLM for the response variables `Social` and `Language`, we can calculate the residuals and the pseudo-observations of the residuals. The pseudo-observations of the residuals can be the results
+After we fit the GLM for the response variables `social` and `language`, we can calculate the residuals and the pseudo-observations of the residuals. The pseudo-observations of the residuals can be the results
 
 . The empirical copulas can be visualized by a scatter plot of the pseudo-observations of the residuals.
 
 ```{r}
 #| label: B02-res_pobsres
 #| include: TRUE
+
 res <- tibble(
-  res_social = (cbind(social_vulnerable, social_trial - social_vulnerable) ~ IRSD) %>%
-    glm(family = binomial, data = SA3_dataset_GLM) %>%
+  res_social = (cbind(social_vulnerable, social_N - social_vulnerable) ~ IRSD) %>%
+    glm(family = binomial, data = aedc2021_sa3_glm) %>%
     residuals(type = "pearson"),
-  res_language = (cbind(language_vulnerable, language_trial - language_vulnerable) ~ IRSD) %>%
-    glm(family = binomial, data = SA3_dataset_GLM) %>%
+  res_language = (cbind(language_vulnerable, language_N - language_vulnerable) ~ IRSD) %>%
+    glm(family = binomial, data = aedc2021_sa3_glm) %>%
     residuals(type = "pearson")
 ) 
 
@@ -175,7 +175,7 @@ pobsres <- tibble(
 ) 
 
 res_pobsres <- bind_cols(res, pobsres)
-res_pobsres_samples <- res_pobsres %>% slice_head(n = 5)
+res_pobsres_samples <- res_pobsres %>% slice_head(n = 6)
 
 plot1 <- res_pobsres %>%
   ggplot(aes(x = res_social, y = res_language)) +
@@ -195,7 +195,7 @@ plot1 <- res_pobsres %>%
   geom_rug(sides = "br") +
   coord_cartesian(xlim = c(-5, 5), ylim = c(-5, 5)) +
   scale_fill_brewer(palette = "Blues") +
-  labs(x = " ", y = "Residuals in Language") +
+  labs(x = " ", y = "\nResiduals in Language") +
   theme_minimal() +
   theme(legend.position = "none")
 
@@ -233,7 +233,7 @@ plot3 <- res_pobsres %>%
              size = 1.5, shape = 15,
              color = "red") +
   coord_cartesian(xlim = c(-5, 5), ylim = c(0, 1)) +
-  labs(x = "Residuals in Social", y = "Probability integral transformed\nresiduals in Social ") +
+  labs(x = "\nResiduals in Social", y = "Probability integral transformed\nresiduals in Social ") +
   theme_minimal() +
   theme(legend.position = "none")
 
@@ -269,7 +269,7 @@ ggarrange(plot1, plot2, plot3, plot4,
   )
 ```
 
-We may notice that the empirical copulas of the residuals between the response variables `Social` and `Language` are not symmetric and not linear, which indicates that the copula function is needed to model the complex dependence between the two response variables.
+We may notice that the empirical copulas of the residuals between the response variables `social` and `language` are not symmetric and not linear, which indicates that the copula function is needed to model the complex dependence between the two response variables.
 
 Then we show some theoretical copulas that are available in the package. The copulas are Gaussian, Frank, Clayton, Gumbel, and Joe copulas. The copulas are visualized by the density plot of the bivariate distribution of the copula.
 
@@ -325,43 +325,52 @@ Based on the density plot of the copulas, we can see that the Gaussian copula is
 
 ## Bivariate Bayesian Hierarchical Model with Copula
 
-In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. As we noticed, the residuals between the response variables `Social` and `Language` are not symmetric and not linear, we would like to try Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix `aedc_W_sa3` that is available in the package.
+In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. As we noticed, the residuals between the response variables `social` and `language` are not symmetric and not linear, we would like to try Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix `aedc_W_sa3` that is available in the package.
 
 ```{r}
 #| label: C01-BHM
 #| include: TRUE
 
 options(width = 120) # Set the output width to a larger value
-data("aedc_W_sa3") # Load the neighborhood matrix
 
-input_formula <- cbind(Social_Vulnerable_21, Language_Vulnerable_21) ~ IRSD
-input_trials <- cbind(aedc_sa3$Social_N_21, aedc_sa3$Language_N_21)
+data("aedc_W_sa3")
+aedc2021_sa3_wide <- aedc2021_sa3 %>%
+  pivot_wider(names_from = "domain",
+              values_from = c("vulnerable", "N"),
+              names_glue = "{domain}_{.value}")
 
-set.seed(1234) # Set the seed for reproducibility
+# Set formulas and trials
+input_formula <- cbind(social_vulnerable, language_vulnerable) ~ IRSD
+input_trials <- cbind(aedc2021_sa3_wide$social_N, aedc2021_sa3_wide$language_N)
+
+# Fit models by CARBayesCopula
 model_fit_clayton <- fit_CARleroux_copula(formula = input_formula,
                                          trials = input_trials,
                                          W = aedc_W_sa3,
-                                         data = aedc_sa3,
+                                         data = aedc2021_sa3_wide,
                                          copula = "clayton",
-                                         burnin = 20000,
-                                         n_sample = 30000,
-                                         thin = 5,
-                                         verbose = FALSE)
+                                         burnin = 5000,
+                                         n_sample = 10000,
+                                         thin = 5)
 model_fit_invgumbel <- fit_CARleroux_copula(formula = input_formula,
                                           trials = input_trials,
                                           W = aedc_W_sa3,
-                                          data = aedc_sa3,
+                                          data = aedc2021_sa3_wide,
                                           copula = "inversegumbel",
-                                         burnin = 20000,
-                                         n_sample = 30000,
-                                         thin = 5,
-                                         verbose = FALSE)
+                                          burnin = 5000,
+                                          n_sample = 10000,
+                                          thin = 5)
+
 ```
+
 It may take a while to fit the model, as the model is fitted with MCMC simulation. After the model is fitted, we can summarize the model by the `summary` function. The summary of the model includes the posterior means, standard deviations, and the 95% credible intervals of the parameters, the DIC value, and the effective sample size of the parameters. The Deviance Information Criterion (DIC) and Leave-One-Out information criterion (LOOIC) are provided to compare the goodness of fit of the models [@vehtari2020loo]. We prefer the model with a smaller DIC and LOOIC value.
+
 ```{r}
 #| label: C02-summary
 #| include: TRUE
+
 summary(model_fit_clayton)
+
 summary(model_fit_invgumbel)
 ```
 
@@ -424,16 +433,16 @@ We can visualize the fitted results as the model-based estimation on maps to see
 est_model <- model_fit_invgumbel$fitted_values
 colnames(est_model) <- c("social_est_model", "language_est_model")
 
-aedc_sa3_results <- aedc_sa3 %>%
-  select(SA3_NAME21, SA4_NAME21, GCC_NAME21, STE_NAME21,
+aedc_sa3_results <- aedc2021_sa3_wide %>%
+  dplyr::select(SA3_NAME21, SA4_NAME21, GCC_NAME21, STE_NAME21,
          IRSD, 
-         Social_Vulnerable_21, Language_Vulnerable_21,
-         Social_N_21, Language_N_21) %>%
+         social_vulnerable, language_vulnerable,
+         social_N, language_N) %>%
   bind_cols(est_model) %>%
-  mutate(social_est_dir = Social_Vulnerable_21 / Social_N_21,
-         language_est_dir = Language_Vulnerable_21 / Language_N_21,
-         social_est_model = social_est_model / Social_N_21,
-         language_est_model = language_est_model / Language_N_21) %>%
+  mutate(social_est_dir = social_vulnerable / social_N,
+         language_est_dir = language_vulnerable / language_N,
+         social_est_model = social_est_model / social_N,
+         language_est_model = language_est_model / language_N) %>%
   pivot_longer(cols = contains(c("est_dir","est_model")),
                names_to = "domain_method",
                values_to = "est") %>%
