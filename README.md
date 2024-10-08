@@ -2,7 +2,7 @@
 
 ## Overview
 
-`PackageName` is an R package designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on GitHub. The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package (Eddelbuettel and François 2011; Lee 2013).
+`CARBayesCopula` is an R package designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on GitHub. The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package (Eddelbuettel and François 2011; Lee 2013).
 
 As this is the first published version, the response variables can only be binomial. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
 
