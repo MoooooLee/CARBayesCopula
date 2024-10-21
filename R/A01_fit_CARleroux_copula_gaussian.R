@@ -709,7 +709,7 @@ fit_CARleroux_copula_gaussian <- function(formula,
   if(verbose)
   {
     b<-proc.time()
-    cat("Finished in ", round(b[3]-a[3], 1), "seconds_\n")
+    cat("Finished in ", round(b[3]-a[3], 1), "seconds.\n")
     results <- c(results, elapsed = round(b[3]-a[3], 1))
   }else
   {}

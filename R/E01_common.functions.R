@@ -295,7 +295,7 @@ common_modelfit <- function(samples.loglike, deviance.fitted){
 
 
   #### LOOIC
-  LOO <- suppressWarnings(loo(samples.loglike[,-which(is.na(samples.loglike[1,]))]))
+  LOO <- suppressWarnings(loo(samples.loglike[, colSums(is.na(samples.loglike)) == 0]))
   LOOIC <- LOO$estimates[3,1]
   elpd <- LOO$estimates[1,1]
 
