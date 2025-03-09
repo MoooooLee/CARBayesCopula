@@ -1,6 +1,6 @@
 ---
-title: "Bivariate Bayesian Hierachical Model with Copula"
-subtitle: "Vignette of `CARBayesCopula` version 0.2.5"
+title: "Bivariate Bayesian Hierarchical Model with Copula"
+subtitle: "Vignette of `CARBayesCopula` version 0.3.0"
 author: Mu
 date: today
 bibliography: ref.bib
@@ -16,7 +16,7 @@ vignette: >
 theme: flaty
 ---
 
-This is a vignette of the R package `CARBayesCopula` version 0.2.5. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` package and `CARBayes` package [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. The package is still under development and more features will be added in the future.
+This is a vignette of the R package `CARBayesCopula` version 0.2.5. The package is designed to fit a bivariate Bayesian hierarchical model with copula, which is developed by Mu Li and available on [GitHub](https://github.com/MoooooLee/CARBayesCopula). The package implements bivariate spatial generalized linear mixed models for area unit data, with inference in a Bayesian setting using Markov chain Monte Carlo (MCMC) simulation, which is built on the `Rcpp` and `CARBayes` packages [@eddelbuettel2011rcpp; @lee2013carbayes]. As this is the first published version, the response variables can only be binomial. The structured random effects that capturing the spatial dependence is modeled by a conditional autoregressive (CAR) prior. The copula is used to model the dependence between the two response variables. The package is designed to be user-friendly and computationally efficient. More features will be added in the future as the package is further developed.
 
 # Model Formulation
 
@@ -24,7 +24,7 @@ This is a vignette of the R package `CARBayesCopula` version 0.2.5. The package 
 
 The study region $\mathcal{S}$ is divided into $K$ non-overlapping areal units $\mathcal{S}_1, \mathcal{S}_2, \ldots, \mathcal{S}_n$. The response variables are $\mathbf{y}_{A} = (y_{A,1}, \ldots, y_{A,K})$ and $\mathbf{y}_{B} = (y_{B,1}, \ldots, y_{B,K})$, and a matrix of covariates $\mathbf{X} = (\mathbf{x_1},\ldots,\mathbf{x_K})$ is available for each areal unit. We can also denote the known offsets by $\mathbf{o} = (o_1,\ldots,o_K)$. We consider the trial numbers $\mathbf{N}_A = (N_{A,1},\ldots,N_{A,K})$ and $\mathbf{N}_B = (N_{B,1},\ldots,N_{B,K})$, which are known for each areal unit.
 
-Here we noticed that missing, `NA` values are allowed in the response variables $(\mathbf{Y}_A, \mathbf{Y}_B)$. However, the missing values in covariates, offsets or trial numbers are not allowed. Trials numbers should be positive integers.
+While missing, `NA` values are allowed in the response variables $(\mathbf{Y}_A, \mathbf{Y}_B)$, missing values in covariates, offsets or trial numbers are not allowed. Trial numbers should be positive integers.
 
 The response variables are binomial distributed, i.e., $$
 \begin{align}
@@ -58,18 +58,18 @@ However, based on the choice of the copula, the parameter $\alpha$ can have diff
 
 ## Copulas
 
-Copulas help us to decompose the joint distribution of two random variables into the marginal distributions and the copula function, which can be defined by Skalar's theorem clearly [@sklar1973random].
+Copulas help us to decompose the joint distribution of two random variables into the marginal distributions and the copula function, which can be defined by Sklar's theorem clearly [@sklar1973random].
 $$
 \begin{align}
 F_{A,B}(x,y) &= C_{\alpha}(F_A(x), F_B(y))\\
 &= C_{\alpha}(u, v)\\
 \end{align}
 $$ 
-where $F_{A,B}(x,y)$ is the cumulative probability function of the joint distribution of random variables $A$ and $B$, $F_A(x)$ and $F_B(y)$ are cumulative probability function of the marginal distributions each of them, and $C_{\alpha}$ is the copula function with parameter $\alpha$, where the input of the copula function is the cumulative probability $u$ and $v$ of the marginal distributions.
+where $F_{A,B}(x,y)$ is the cumulative probability function of the joint distribution of random variables $A$ and $B$, $F_A(x)$ and $F_B(y)$ are the cumulative probability function of the marginal distributions for each of them, and $C_{\alpha}$ is the copula function with parameter $\alpha$, where the input of the copula function is the cumulative probability $u$ and $v$ of the marginal distributions.
 
 The choice of copula function is crucial in the modeling of the dependence between the two random variables. One of the important characteristics of the copula function is the tail dependence, which is the probability that both random variables are in the lower tail $\lambda_L$ and the upper tail $\lambda_U$ of their marginal distributions.
 
-There are many copula functions available in the literature, and each of them has its own characteristics. Here we only consider some of the copula functions that are famous and widely used in the literature [@genest1993statistical]. The copula functions that are available in the package are as follows [@nelsen2006introduction]:
+There are many copula functions available in the literature, and each of them has its own characteristics. Here we only consider some of the copula functions that are widely used in the literature [@genest1993statistical; @nelsen2006introduction]. The copula functions that are available in the package are as follows:
 
 | Copula   |                                    Bivariate Copula Function                                    |     $\lambda_L$     |   $\lambda_U$    |
 |-----------|:-------------------------------------:|:---------:|:---------:|
@@ -85,11 +85,35 @@ The Clayton copula is used to model the lower tail dependence, the Frank copula 
 
 The inverse copulas, which are the mirror image of the original copulas, are also available in the package, which can be used to model the opposite tail dependence.
 
+
 # Model Implementation in the Package
 
-We would like to show the implementation of the model in the package by a example. The example is based on the dataset `aedc2021_sa3` and the neighborhood matrix `aedc_W_sa3` that are available in the package. The dataset `aedc2021_sa3` contains the response variables `health` and `social`, `emotional`, `language`, `communication` which are five difference domains of measure of children development that collected by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contains four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `aedc_W_sa3` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
+ This example of model implementation is based on the dataset `aedc2021_sa3` and the neighborhood matrix `aedc_W_sa3`, both available in the package. The dataset `aedc2021_sa3` contains the response variables `health` and `social`, `emotional`, `language`, `communication` which are five difference domains of measure of children development that collected by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contain four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `aedc_W_sa3` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
+
+In details, the dataset `aedc2021_sa3` contains the following variables:
+  - *SA3_NAME21*, *SA4_NAME21*, *GCC_NAME21*, *STE_NAME21*: These variables represent the names of the geographical units under the Australian Statistical Geography Standard (ASGS) 2021 at different levels.
+    + *SA3_NAME21*: The names of the Statistical Area level 3 (SA3) regions.
+    + *SA4_NAME21*: The names of the Statistical Area level 4 (SA4) regions.
+    + *GCC_NAME21*: The names of the Greater Capital City (GCC) regions.
+    + *STE_NAME21*: The names of the State and Territory (STE) regions.
+  - *IRSD*, *IRSAD* *IER*, *IEO*: These variables represent the Socio-Economic Indexes for Areas (SEIFA) in Australia. Since the original SEIFA values are only available for census years (2006, 2011, 2016, and 2021) under different geographical standards, the values in this dataset have been aligned to the ASGS 2021 version using correspondence files. Additionally, the kernel interpolation method was applied to align the SEIFA values with the Australian Early Development Census (AEDC) years (2009, 2012, 2015, 2018, and 2021).
+    + *IRSD*: The Index of Relative Socio-economic Disadvantage. Higher values indicate lower levels of disadvantage.
+    + *IRSAD*: The Index of Relative Socio-economic Advantage and Disadvantage. Higher values indicate greater advantage, while lower values indicate greater disadvantage.
+    + *IER*: The Index of Relative Socio-economic Advantage and Disadvantage. Higher values indicate greater advantage, while lower values indicate greater disadvantage.
+    + *IEO*: The Index of Economic Resources. Higher values represent greater access to economic resources.
+  - *URP*: The Usual Resident Population of the SA3 regions.
+  - *domain*: The AEDC domain used to measure childhood developmental vulnerability. This variable can take one of the following values:
+    + *health*: The Physical Health and Wellbeing domain.
+    + *social*: The Social Competence domain.
+    + *emotional*: The Emotional Maturity domain.
+    + *language*: The Language and Cognitive Skills domain.
+    + *communication*: The Communication Skills and General Knowledge domain.
+  - *vulnerable*: The number of children in the given SA3 area who are categorized as vulnerable in the specified domain.
+  - *N*: The total number of children in the sample for the given domain in that area.
+  - *geometry*: The spatial coordinates of the SA3 regions, which are used to identify neighborhood structures for spatial modeling and visualize the spatial distribution of variables on maps.
 
 In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables `social` and `language`, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix `aedc_W_sa3` and the covariates `IRSD`.
+
 
 ## Package Installation
 
@@ -113,7 +137,7 @@ devtools::install_github("MoooooLee/CARBayesCopula")
 
 As the package is still under development, the package is not available on CRAN.
 
-For this example, we also need to library packages `tidyverse` for data analysis and visualization. We also need to library the package `spdep` for spatial dependence analysis, and the package `flextable` for table formatting, and the package `ggpubr` for advanced visualization.
+For this example, we also need the packages `tidyverse` for data analysis and visualization, `spdep` for spatial dependence analysis, `flextable` for table formatting, and`ggpubr` for advanced visualization.
 
 ```{r}
 #| label: A02-library
@@ -130,7 +154,7 @@ library(ggpubr)
 
 ## Empirical Copulas of Residuals
 
-We first would like to show the empirical copulas of the residuals between the response variables `social` and `language` after fitting the simple generalized linear model (GLM) with the covariate `IRSD` for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.
+First we shall examine the empirical copulas of the residuals between the response variables `social` and `language` after fitting the simple generalized linear model (GLM) with the covariate `IRSD` for each of the response variables. The empirical copulas, which can be visualized by a scatter plot of the pseudo-observations of the residuals, can help us to understand the dependence between the two response variables after we remove the effects of the marginal distributions.
 
 ```{r}
 #| label: B01-read_data
@@ -149,12 +173,13 @@ aedc2021_sa3_glm <- aedc2021_sa3 %>%
          language_vulnerable, language_N)
   
 head(aedc2021_sa3_glm) %>%
-  flextable()
+  flextable() %>%
+  autofit()
 ```
 
-After we fit the GLM for the response variables `social` and `language`, we can calculate the residuals and the pseudo-observations of the residuals. The pseudo-observations of the residuals can be the results
+fter fitting the Generalized Linear Model (GLM) for the response variables social and language, the residuals and their corresponding pseudo-observations can be calculated. The pseudo-observations of the residuals result from transforming the residuals to uniform marginals, which allows for the estimation of the empirical copula of the bivariate residuals.
 
-. The empirical copulas can be visualized by a scatter plot of the pseudo-observations of the residuals.
+The empirical copula provides a non-parametric representation of the dependence structure between the two variables, independent of their marginal distributions. To explore this dependence visually, the pseudo-observations of the residuals can be plotted in a scatter plot, where the x-axis and y-axis represent the transformed residuals. This visualization helps identify potential non-linear or asymmetric relationships between `social` and `language`, which may not be fully captured by standard correlation measures.
 
 ```{r}
 #| label: B02-res_pobsres
@@ -325,7 +350,7 @@ Based on the density plot of the copulas, we can see that the Gaussian copula is
 
 ## Bivariate Bayesian Hierarchical Model with Copula
 
-In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. As we noticed, the residuals between the response variables `social` and `language` are not symmetric and not linear, we would like to try Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix `aedc_W_sa3` that is available in the package.
+In this section we would like to show the implementation of the bivariate Bayesian hierarchical model with copula. Since the residuals between the response variables `social` and `language` are not symmetric and not linear, we will try using Clayton and inverse of Gumbel copulas to model the dependence between the two response variables. We need to load the neighborhood matrix `aedc_W_sa3` that is available in the package.
 
 ```{r}
 #| label: C01-BHM
@@ -351,21 +376,21 @@ model_fit_clayton <- fit_CARleroux_copula(formula = input_formula,
                                          W = aedc_W_sa3,
                                          data = aedc2021_sa3_wide,
                                          copula = "clayton",
-                                         burnin = 5000,
-                                         n_sample = 10000,
-                                         thin = 5)
+                                         burnin = 100000,
+                                         n_sample = 400000,
+                                         thin = 100)
 model_fit_invgumbel <- fit_CARleroux_copula(formula = input_formula,
                                           trials = input_trials,
                                           W = aedc_W_sa3,
                                           data = aedc2021_sa3_wide,
                                           copula = "inversegumbel",
-                                          burnin = 5000,
-                                          n_sample = 10000,
-                                          thin = 5)
+                                          burnin = 100000,
+                                          n_sample = 400000,
+                                          thin = 100)
 
 ```
 
-It may take a while to fit the model, as the model is fitted with MCMC simulation. After the model is fitted, we can summarize the model by the `summary` function. The summary of the model includes the posterior means, standard deviations, and the 95% credible intervals of the parameters, the DIC value, and the effective sample size of the parameters. The Deviance Information Criterion (DIC) and Leave-One-Out information criterion (LOOIC) are provided to compare the goodness of fit of the models [@vehtari2020loo]. We prefer the model with a smaller DIC and LOOIC value.
+It may take a while to fit the model using MCMC simulation. After the model is fitted, we can summarize the model by the `summary` function. The summary of the model includes the posterior means, standard deviations, and the 95% credible intervals of the parameters, the DIC value, and the effective sample size of the parameters. The Deviance Information Criterion (DIC) and Leave-One-Out information criterion (LOOIC) are provided to compare the goodness of fit of the models [@vehtari2020loo]. We prefer the model with a smaller DIC and LOOIC value.
 
 ```{r}
 #| label: C02-summary
@@ -376,7 +401,7 @@ summary(model_fit_clayton)
 summary(model_fit_invgumbel)
 ```
 
-## Model Comparison with bivaraite gaussian model in `CARBayes` package
+## Model Comparison with bivariate Gaussian model in `CARBayes` package
 
 We would like to compare the bivariate Bayesian hierarchical model with copula with the bivariate Gaussian model in the `CARBayes` package. Here we fit all the copulas that are available in the package, which are Gaussian, Clayton, Joe, Gumbel, Frank, and their inverse copulas and the bivariate Gaussian model. We would like to compare the DIC and LOOIC values of the models to see which model is better to fit the data.
 
@@ -421,11 +446,11 @@ table_ic$data[[10]] %>%
     autofit()
 ```
 
-We noticed that the bivariate Bayesian hierarchical model with copula with the Clayton copula has the smallest WAIC value and the inverse of Gumbel copula has the smallest LOOIC value. Those two models both better fit the data than the bivariate Gaussian model (denote as MVS).
+The bivariate Bayesian hierarchical model with copula with the Clayton copula has the smallest WAIC value and the inverse of Gumbel copula has the smallest LOOIC value. Those two models both better fit the data than the bivariate Gaussian model (denoted as MVS).
 
 ## Visualization of the Results on Maps
 
-We can visualize the fitted results as the model-based estimation on maps to see the spatial distribution of the response variables and the structured random effects comparing to the direct estimation. The model-based estimation is the estimation of the vulnerability prevalence in the Social and Language domains, which is estimated by the inverse Gumbel copula (based on the criteria of LOOIC value). The direct estimation is estimated by the direct proportion of the vulnerable children to the total children in the areal units.
+We can visualize the fitted results as the model-based estimation on maps to see the spatial distribution of the response variables and the structured random effects comparing the direct estimates. The model-based estimation is the estimation of the vulnerability prevalence in the Social and Language domains, which is estimated by the inverse Gumbel copula (based on the criteria of LOOIC value). The direct estimation is estimated by the direct proportion of the vulnerable children to the total children in the areal units.
 
 
 ```{r}
@@ -470,7 +495,7 @@ aedc_sa3_results %>%
        subtitle = "Estimated by direct proportion",
        fill = "Vulnerability Levels (Deciles)") +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right")
 
 aedc_sa3_results %>%
   filter(domain_method == "language_est_dir") %>%
@@ -484,7 +509,7 @@ aedc_sa3_results %>%
        subtitle = "Estimated by direct proportion",
        fill = "Vulnerability Levels (Deciles)") +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right")
 
 ```
 
