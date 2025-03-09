@@ -91,25 +91,32 @@ The inverse copulas, which are the mirror image of the original copulas, are als
  This example of model implementation is based on the dataset `aedc2021_sa3` and the neighborhood matrix `aedc_W_sa3`, both available in the package. The dataset `aedc2021_sa3` contains the response variables `health` and `social`, `emotional`, `language`, `communication` which are five difference domains of measure of children development that collected by the Australian Early Development Census (AEDC) [@AEDC_Data]. The covariates contain four difference Social-Economic Index of Area (SEIFA) in Australia for each areal unit [@abs_2021_seifa]. The neighborhood matrix `aedc_W_sa3` is a binary matrix that defines the neighborhood structure of the areal units, which is based on the spatial coordinates of the Australia Statistical Geography Standard (ASGS) 2021 SA3 regions [@ASGS2021]. The dataset also contains the spatial coordinates of the areal units, which can be used to visualize the spatial distribution of the variables on maps.
 
 In details, the dataset `aedc2021_sa3` contains the following variables:
+
   - *SA3_NAME21*, *SA4_NAME21*, *GCC_NAME21*, *STE_NAME21*: These variables represent the names of the geographical units under the Australian Statistical Geography Standard (ASGS) 2021 at different levels.
     + *SA3_NAME21*: The names of the Statistical Area level 3 (SA3) regions.
     + *SA4_NAME21*: The names of the Statistical Area level 4 (SA4) regions.
     + *GCC_NAME21*: The names of the Greater Capital City (GCC) regions.
     + *STE_NAME21*: The names of the State and Territory (STE) regions.
+    
   - *IRSD*, *IRSAD* *IER*, *IEO*: These variables represent the Socio-Economic Indexes for Areas (SEIFA) in Australia. Since the original SEIFA values are only available for census years (2006, 2011, 2016, and 2021) under different geographical standards, the values in this dataset have been aligned to the ASGS 2021 version using correspondence files. Additionally, the kernel interpolation method was applied to align the SEIFA values with the Australian Early Development Census (AEDC) years (2009, 2012, 2015, 2018, and 2021).
     + *IRSD*: The Index of Relative Socio-economic Disadvantage. Higher values indicate lower levels of disadvantage.
     + *IRSAD*: The Index of Relative Socio-economic Advantage and Disadvantage. Higher values indicate greater advantage, while lower values indicate greater disadvantage.
     + *IER*: The Index of Relative Socio-economic Advantage and Disadvantage. Higher values indicate greater advantage, while lower values indicate greater disadvantage.
     + *IEO*: The Index of Economic Resources. Higher values represent greater access to economic resources.
+    
   - *URP*: The Usual Resident Population of the SA3 regions.
+  
   - *domain*: The AEDC domain used to measure childhood developmental vulnerability. This variable can take one of the following values:
     + *health*: The Physical Health and Wellbeing domain.
     + *social*: The Social Competence domain.
     + *emotional*: The Emotional Maturity domain.
     + *language*: The Language and Cognitive Skills domain.
     + *communication*: The Communication Skills and General Knowledge domain.
+    
   - *vulnerable*: The number of children in the given SA3 area who are categorized as vulnerable in the specified domain.
+  
   - *N*: The total number of children in the sample for the given domain in that area.
+  
   - *geometry*: The spatial coordinates of the SA3 regions, which are used to identify neighborhood structures for spatial modeling and visualize the spatial distribution of variables on maps.
 
 In this example, we will fit a bivariate Bayesian hierarchical model with copula for the response variables `social` and `language`, where the response variables are binomial distributed. The model will be fitted with the neighborhood matrix `aedc_W_sa3` and the covariates `IRSD`.
@@ -531,7 +538,7 @@ aedc_sa3_results %>%
        subtitle = "Estimated by model with inverse Gumbel copula",
        fill = "Vulnerability Levels (Deciles)") +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right")
 
 aedc_sa3_results %>%
   filter(domain_method == "language_est_model") %>%
@@ -545,7 +552,7 @@ aedc_sa3_results %>%
        subtitle = "Estimated by model with inverse Gumbel copula",
        fill = "Vulnerability Levels (Deciles)") +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right")
 
 ```
 
